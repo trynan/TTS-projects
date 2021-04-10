@@ -1,0 +1,45 @@
+-- local position code originally by dzikakulka
+-- adapted for just 2d (x and z coords)
+function round(x)
+    return tonumber(string.format("%." .. (2) .. "f", x))
+end
+
+function LocalPos(object, local_position, y_value)
+    local rotation = object.getRotation()[2] -- only care about y rotation
+    -- create rotation matrix
+    local rot_mat = RotMatrix(rotation)
+    -- use rotation matrix to rotate local position
+    -- result is local position in global coords
+    local_position = Vec_Mat_Mult(local_position, rot_mat)
+    -- add the global coords of the local position ot the object's position
+    local add = Vec_Add(local_position, {object.getPosition()[1], object.getPosition()[3]})
+    -- return must still be a 3d position vector. set y to 2
+    return {add[1], y_value, add[2]}
+end
+
+function RotMatrix(ang_deg)
+    local ang = math.rad(ang_deg)
+    local rot_mat = {
+        { math.cos(ang), math.sin(ang)},
+        {-math.sin(ang), math.cos(ang)}
+    }
+    return rot_mat
+end
+
+function Vec_Mat_Mult(v, m)
+    local result = {0,0}
+    for i=1,2 do
+        for j=1,2 do
+            result[i] = result[i] + (m[i][j] * v[j])
+        end
+    end
+    return result
+end
+
+function Vec_Add(v1, v2)
+    local result = {0,0}
+    for i=1,2 do
+        result[i] = v1[i] + v2[i]
+    end
+    return result
+end

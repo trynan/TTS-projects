@@ -1,0 +1,298 @@
+-- requires the following global vars:
+
+-- PLAYER_COLORS - list of all player colors (in order)
+-- invisCardPlace - list of scripting zones as references for
+    -- where to put the invisible cards (indexes are player colors)
+-- cards - list of num of cards per player (indexes are player colors)
+-- handZone - list of hand zones (indexes are player colors)
+-- GATHERING - bool of whether deck is currently being reset
+-- invisCardCount - list of scripting zones that contain all invisible
+    -- cards in front of players (indexes are player colors)
+
+function spawn_card(p, c) -- p is player, c is card
+    local c = spawnObjectData({
+        data     = c.getData(),
+        position = LocalPos(invisCardPlace[p], {2 * cards[p], 0}, 0.97),
+        rotation = invisCardPlace[p].getRotation(),
+        scale    = {0.9, 1, 0.9}
+    })
+    c.setInvisibleTo(PLAYER_COLORS)
+    c.getComponent("AudioSource").set("mute", true) -- mute the card's sounds
+    cards[p] = cards[p] + 1
+end
+
+function onObjectEnterZone(zone, obj)
+    if obj.type == "Card" or obj.type == "Deck" then
+        for p,z in pairs(handZone) do
+            if zone == z then -- card entered hand zone
+                if cards[p] < 0 then
+                    cards[p] = 0
+                end
+                spawn_card(p, obj)
+                return
+            end
+        end
+    end
+end
+
+function onObjectLeaveZone(zone, obj)
+    if not GATHERING and (obj.type == "Card" or obj.type == "Deck") then -- when resetting decks, we want to ignore when cards leave scripting zones
+        for p,z in pairs(handZone) do
+            if zone == z then -- when a card leaves a hand zone:
+                local t = obj.getTags()[1]
+                for _,card in ipairs(invisCardCount[p].getObjects()) do
+                    -- find the invisible card in front of the player with the same
+                    -- tag as the card that left their hand zone.
+                    if card.getTags()[1] == t then
+                        card.destruct()
+                        cards[p] = cards[p] - 1
+                        break
+                    end
+                end
+                reference_player = p
+                -- coroutine to shift cards to the left
+                startLuaCoroutine(Global, "reset_invis_cards")
+                -- startLuaCoroutine(Global, "reset_all_invis_cards")
+            end
+        end
+    end
+end
+
+function reset_invis_cards()
+    wait(10)
+    local p = reference_player
+    cards[p] = 0
+    -- delete current cards
+    for _,card in ipairs(invisCardCount[p].getObjects()) do
+        if card.getScale()[1] < 1 then
+            card.destruct()
+        end
+    end
+    for _,card in ipairs(handZone[p].getObjects()) do
+        spawn_card(p, card)
+    end
+    return 1
+end
+
+function onPlayerAction(player, action, targets)
+    local p = player.color
+    if action == Player.Action.PickUp then
+        if #targets == 1 and targets[1].type == "Card" then
+            -- player is picking up a single card
+            local c = targets[1]
+            local found = false
+            for p_hand,h in pairs(handZone) do
+                for n,i in ipairs(h.getObjects()) do
+                    if c == i then
+                        reference_player = p_hand
+                        found = true
+                        break
+                    end
+                end
+                if found then break end
+            end
+            if found then
+                -- once they let go of the card, reset the invisible cards
+                Wait.condition(
+                    function()
+                        startLuaCoroutine(Global, "reset_invis_cards")
+                    end,
+                    function()
+                        return (c.held_by_color == nil)
+                    end
+                    -- 30,
+                    -- function()
+                    --     print('RESET HAND FUNCTION FAILED')
+                    -- end
+                )
+            end
+        end
+    end
+    -- code which denies players from taking cards from other players' hands
+    -- (assuming a single target)
+    -- if action == Player.Action.PickUp then
+    --     if targets[1].type == "Card" then -- player is picking up a card
+    --         local c = targets[1]
+    --         local isInHand = false
+    --         for _,i in ipairs(handZone[player.color].getObjects()) do
+    --             if i.getTags()[1] == c.getTags()[1] then
+    --                 isInHand = true
+    --             end
+    --         end
+    --         if not isInHand then
+    --             local found = false
+    --             for p,h in pairs(handZone) do
+    --                 for _,i in ipairs(h.getObjects()) do
+    --                     if c == i then
+    --                         found = true
+    --                     end
+    --                 end
+    --             end
+    --             return not found
+    --         end
+    --     end
+    -- end
+end
+
+-- function reset_all_invis_cards()
+--     wait(10)
+--     for p,h in pairs(handZone) do
+--         cards[p] = 0
+--         for _,c in ipairs(invisCardCount[p].getObjects()) do
+--             card.destruct()
+--         end
+--         for _,c in ipairs(h) do
+--             spawn_card(p, c)
+--         end
+--     end
+-- end
+
+----------------------------------------------------------------------------------------------------------
+-- original:
+-- function onObjectEnterZone(zone, obj)
+--     if obj.type == "Card" or obj.type == "Deck" then
+--         for p,z in pairs(handZone) do
+--             if zone == z then -- if a card enters a handzone:
+--                 local t = obj.getTags()[1] -- get the tag that identifies the card
+--                 local invisDeck = getDeck(hiddenDeckZone)
+--                 for _,card in ipairs(invisDeck.getObjects()) do
+--                     -- search the invisible deck for a card that has the same gm notes
+--                     -- as the tag of the card that entered the handzone.
+--                     -- i do this instead of searching for a matching tag because
+--                     -- you can't access the tags of a card that's currently in a deck.
+--                     if card.gm_notes == t then
+--                         if cards[p] < 0 then -- failsafe for if somehow player cards went below 0
+--                             cards[p] = 0
+--                         end
+--                         local c = invisDeck.takeObject({
+--                             -- place the card in front of the player, to the right by 2 units per card that's already there
+--                             position = LocalPos(invisCardPlace[p], {2*cards[p], 0}, 0.97),
+--                             rotation = invisCardPlace[p].getRotation(),
+--                             guid     = card.guid, -- make sure you're taking the card whose gm notes match the tag
+--                             smooth   = false
+--                         })
+--                         cards[p] = cards[p] + 1
+--                         c.setInvisibleTo(PLAYER_COLORS)
+--                         c.getComponent("AudioSource").set("mute", true) -- mute the card's sounds
+--                         -- break
+--                         return 1
+--                     end
+--                 end
+--                 -- break goes here
+--             end
+--         end
+--     end
+-- end
+
+-- function onObjectLeaveZone(zone, obj)
+--     if not GATHERING  and (obj.type == "Card" or obj.type == "Deck") then -- when resetting decks, we want to ignore when cards leave scripting zones
+--         for p,z in pairs(handZone) do
+--             if zone == z then -- when a card leaves a hand zone:
+--                 local t = obj.getTags()[1]
+--                 local invisDeck = getDeck(hiddenDeckZone)
+--                 for _,card in ipairs(invisCardCount[p].getObjects()) do
+--                     -- avert disaster by fixing any accidental decks that happened to form
+--                     if card.type == "Deck" then -- there shouldn't be any decks
+--                         print('uh oh')
+--                         print(#card.getObjects())
+--                         for i,c in ipairs(card.getObjects()) do
+--                             print(c.gm_notes)
+--                         end
+--                         -- card.setPosition({-4.14, 1.6, -3.10})
+--                         -- card.setRotation({0.00, 180.00, 180.00})
+--                         -- cards[p] = cards[p] - 1
+--                     end
+--                     -- find the invisible card in front of the player with the same gm notes as the tag
+--                     -- of the card the left the hand zone.
+--                     -- could use tags in this case, either way is fine
+--                     if card.getGMNotes() == t then
+--                         card.setPosition({-4.14, 1.6, -3.10}) -- put the card back in the invisible deck
+--                         card.setRotation({0.00, 180.00, 180.00})
+--                         cards[p] = cards[p] - 1
+--                         break
+--                     end
+--                 end
+--                 reference_player = p
+--                 -- make sure the cards that remain are condensed to the left
+--                 -- that's what this coroutine does
+--                 startLuaCoroutine(Global, "reset_invis_cards")
+--             end
+--         end
+--     end
+-- end
+
+-- experimental:
+-- function onObjectEnterScriptingZone(zone, obj)
+--     if obj.type == "Card" or obj.type == "Deck" then
+--         for p,z in pairs(handZone) do
+--             if zone == z then
+--                 local found = false
+--                 local rep_num = 0
+--                 local t = obj.getTags()[1]
+--                 local invisDeck = getDeck(hiddenDeckZone)
+--                 while not found and rep_num < 25 do
+--                     print(rep_num)
+--                     for _,card in ipairs(invisDeck.getObjects()) do
+--                         if card.gm_notes == t then
+--                             found = true
+--                             if cards[p] < 0 then
+--                                 cards[p] = 0
+--                             end
+--                             local c = invisDeck.takeObject({
+--                                 position = LocalPos(invisCardPlace[p], {2*cards[p], -2.5, 0}),
+--                                 rotation = invisCardPlace[p].getRotation(),
+--                                 guid     = card.guid,
+--                                 smooth   = false
+--                             })
+--                             cards[p] = cards[p] + 1
+--                             c.setInvisibleTo(PLAYER_COLORS)
+--                             c.getComponent("AudioSource").set("mute", true)
+--                             -- break
+--                             return 1
+--                         end
+--                     end
+--                     -- break goes here
+--                     rep_num = rep_num + 1
+--                 end
+--             end
+--         end
+--     end
+-- end
+--
+-- function onObjectLeaveScriptingZone(zone, obj)
+--     if not GATHERING and (obj.type == "Card" or obj.type == "Deck") then
+--         for p,z in pairs(handZone) do
+--             if zone == z then
+--                 local t = obj.getTags()[1]
+--                 local invisDeck = getDeck(hiddenDeckZone)
+--                 for _,card in ipairs(invisCardCount[p].getObjects()) do
+--                     -- avert disaster by fixing any accidental decks that happened to form
+--                     if card.type == "Deck" then
+--                         print('uh oh')
+--                         print(#card.getObjects())
+--                         for i,c in ipairs(card.getObjects()) do
+--                             print(c.gm_notes)
+--                         end
+--                         -- card.setPosition({-4.14, 1.6, -3.10})
+--                         -- card.setRotation({0.00, 180.00, 180.00})
+--                         -- cards[p] = cards[p] - 1
+--                     end
+--                     local found = false
+--                     local rep_num = 0
+--                     while not found and rep_num < 15 do
+--                         if card.getGMNotes() == t then
+--                             card.setPosition({-4.14, 1.6, -3.10})
+--                             card.setRotation({0.00, 180.00, 180.00})
+--                             cards[p] = cards[p] - 1
+--                             found = true
+--                             break
+--                         end
+--                         rep_num = rep_num + 1
+--                     end
+--                 end
+--                 reference_player = p
+--                 startLuaCoroutine(Global, "reset_invis_cards")
+--             end
+--         end
+--     end
+-- end
