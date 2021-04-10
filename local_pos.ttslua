@@ -11,7 +11,7 @@ function LocalPos(object, local_position, y_value)
     -- use rotation matrix to rotate local position
     -- result is local position in global coords
     local_position = Vec_Mat_Mult(local_position, rot_mat)
-    -- add the global coords of the local position ot the object's position
+    -- add the global coords of the local position to the object's position
     local add = Vec_Add(local_position, {object.getPosition()[1], object.getPosition()[3]})
     -- return must still be a 3d position vector. set y to 2
     return {add[1], y_value, add[2]}
