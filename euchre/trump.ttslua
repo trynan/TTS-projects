@@ -1,0 +1,116 @@
+-- functions for deciding which suit is trump and changing UI elements accordingly
+-- requires global vars:
+-- PASS_COUNTER - keeps track of how many players have passed
+-- centerZone - scripting zone covering the middle area (including the deck)
+-- SUITS - list indexable by c,d,h,s for clubs, diamonds, etc. SUITS[c] = 'clubs'.
+-- NEXT_PLAYER - list of who the next player is with indexes as player colors
+-- DEALT - bool for whether cards have been dealt yet
+-- also requires specific UI elements which I can't be bothered to list out here
+
+function decideTrump(p)
+    UI.setAttributes("suitTable", {offsetXY="0 -150", visibility=p .. "|Black"})
+
+    if PASS_COUNTER == 4 then -- everyone passed
+        set4PassButtons()
+        -- flip the card in the middle
+        for _,c in ipairs(centerZone.getObjects()) do
+            if c.type == "Card" then
+                local suit = c.getTags()[1]
+                -- if the middle card is flipped, you can't choose that suit
+                UI.setAttribute(SUITS[suit], "interactable", false)
+                c.flip()
+            end
+        end
+    end
+
+    if PASS_COUNTER == 8 then -- everyone passed twice
+        gather()
+        return 1
+    end
+    PASS_COUNTER = PASS_COUNTER + 1
+end
+
+function pass(player)
+    local msg = (Player[player.color].steam_name or player.color) .. ' passed to ' .. (Player[NEXT_PLAYER[player.color]].steam_name or NEXT_PLAYER[player.color])
+    broadcastToAll(msg, player.color)
+    decideTrump(NEXT_PLAYER[player.color])
+end
+
+function pickup(player)
+    msg = (Player[player.color].steam_name or player.color) .. ' tells the dealer to pick it up.'
+    broadcastToAll(msg, player.color)
+    for _,c in ipairs(centerZone.getObjects()) do
+        if c.type == "Card" then
+            local suit = c.getTags()[1]
+            chooseTrump(0, SUITS[suit])
+            c.deal(1, findCurrentDealer())
+        end
+    end
+end
+
+function chooseTrump(a,b)
+    local suit = b
+    if type(a) == "userdata" then -- player pressed one of the suit buttons
+        if DEALT then -- only send the message the first time trump is chosen
+            msg = (Player[a.color].steam_name or a.color) .. ' chose "' .. b .. '"!'
+            if b == "nosuit" then
+                msg = (Player[a.color].steam_name or a.color) .. ' chose "no suit"!'
+            end
+            broadcastToAll(msg, a.color)
+        end
+    end
+    setPlayingButtons()
+    UI.setAttribute(suit, "interactable", true)
+    UI.setAttributes("suitTable", {offsetXY="550 -300", visibility="White|Orange|Green|Purple|Black"})
+    DEALT = false
+end
+
+function setStartButtons() -- which buttons are active during trump choosing phase
+    UI.setAttribute("row5", "active", true) -- pick it up
+    UI.setAttribute("row6", "active", true) -- pass
+    -- rest are suit buttons and related
+    UI.setAttribute("row1", "active", false)
+    UI.setAttribute("row2", "active", false)
+    UI.setAttribute("row3", "active", false)
+    UI.setAttribute("row4", "active", false)
+end
+
+function set4PassButtons() -- which buttonss are active after four passes
+    -- activate suit buttons, deactivate 'pick it up' button
+    UI.setAttribute("row2", "active", true)
+    UI.setAttribute("row3", "active", true)
+    UI.setAttribute("row4", "active", true)
+    UI.setAttribute("row5", "active", false)
+end
+
+function setPlayingButtons() -- which buttons are active during normal play
+    UI.setAttribute("row5", "active", false) -- pick it up
+    UI.setAttribute("row6", "active", false) -- pass
+    -- these are suit buttons and related
+    UI.setAttribute("row1", "active", true)
+    UI.setAttribute("row2", "active", true)
+    UI.setAttribute("row3", "active", true)
+    UI.setAttribute("row4", "active", true)
+    -- set all suit buttons to inactive state
+    UI.setAttribute("clubs",    "interactable", false)
+	UI.setAttribute("diamonds", "interactable", false)
+	UI.setAttribute("spades",   "interactable", false)
+	UI.setAttribute("hearts",   "interactable", false)
+    UI.setAttribute("nosuit",   "interactable", false)
+
+	UI.setAttribute("cancel", "interactable", true)
+end
+
+function cancelTrump()
+	UI.setAttribute("diamonds", "interactable", true)
+    UI.setAttribute("spades",   "interactable", true)
+    UI.setAttribute("clubs",    "interactable", true)
+	UI.setAttribute("hearts",   "interactable", true)
+    UI.setAttribute("nosuit",   "interactable", true)
+
+	UI.setAttribute("cancel",   "interactable", false)
+end
+
+function nothin()
+    return 1
+end

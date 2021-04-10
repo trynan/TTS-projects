@@ -1,0 +1,184 @@
+-- script by trynan
+-- requires trump.ttslua and local_pos.ttslua
+
+local centerZoneGUID = "723e10"
+local dealerChipGUID = "e2245e"
+
+local trickPlaceGUIDS = {"779197", "fb88b4", "c52028", "a5700b"}
+local trickZoneGUIDS = {"5d6668", "6d7126", "5c2707", "c46933"}
+local chipZoneGUIDS = {"2915d5", "a97ffd", "33c79b", "23b19d"}
+
+PLAYER_COLORS = { "White", "Orange", "Green", "Purple" }
+PARTNERS = {White="Green", Green="White", Purple="Orange", Orange="Purple"}
+SUITS = {C='clubs', H='hearts', D='diamonds', S='spades'}
+PASS_COUNTER = 0
+TAKING_TRICK = false
+DEALT = false
+
+function onLoad()
+    NEXT_PLAYER = {}
+	ROTATIONS = {}
+	trickPlaces = {} -- where to place the first trick
+	trickZones = {}
+	chipZones = {}
+	local trickSep = 2.5 -- amount to separate tricks by
+	rightDir = {{trickSep, 0, 0}, {0, 0, -trickSep}, {-trickSep, 0, 0}, {0, 0, trickSep}} -- direction of "right"
+	for i,player in ipairs(PLAYER_COLORS) do
+        NEXT_PLAYER[player] = PLAYER_COLORS[i + 1]
+		ROTATIONS[player] = 90 * (i - 1)
+		trickPlaces[player] = getObjectFromGUID(trickPlaceGUIDS[i])
+		trickZones[player] = getObjectFromGUID(trickZoneGUIDS[i])
+		chipZones[player] = getObjectFromGUID(chipZoneGUIDS[i])
+		rightDir[player] = rightDir[i]
+	end
+    NEXT_PLAYER["Purple"] = "White"
+
+	centerZone = getObjectFromGUID(centerZoneGUID)
+	chip = getObjectFromGUID(dealerChipGUID)
+	chip.setPosition({3, 0.98, -3})
+	chip.setRotation({0, 0, 0})
+end
+
+function wait(n)
+	for i=1,n do
+		coroutine.yield()
+	end
+end
+
+function getDeck()
+	for _,o in ipairs(getAllObjects()) do
+		if o.type == "Deck" then
+			return o
+		end
+	end
+end
+
+function findPartnerTricks(p)
+	par = PARTNERS[p]
+	parTrick = false
+	for _,o in ipairs(trickZones[par].getObjects()) do
+		if o.type == "Card" or o.type == "Deck" then
+			parTrick = true
+		end
+	end
+	return parTrick
+end
+
+function findCurrentDealer()
+    for p,z in pairs(chipZones) do
+        for _,o in ipairs(z.getObjects()) do
+            if o.type == "Checker" then
+                return p
+            end
+        end
+    end
+end
+
+function takeTrick(player)
+	if TAKING_TRICK then
+		broadcastToColor("There is already a trick being taken!", player.color, player.color)
+		return 1
+    elseif DEALING then
+        broadcastToColor("You cannot take a trick while cards are being dealt.", player.color, player.color)
+        return 1
+	end
+    if #centerZone.getObjects() > 8 then -- default of 7 objects in that zone. more than 8
+		-- means there are at least two cards in the center.
+		TAKING_TRICK = true
+	else
+		broadcastToColor("It looks like there is no trick to take.", player.color, player.color)
+        return 1
+	end
+
+    local msg = player.color .. ' took the trick.'
+    broadcastToAll(msg, player.color)
+	local pc = player.color
+	if findPartnerTricks(pc) then -- if partner has already taken tricks then send tricks their way instead
+		pc = PARTNERS[pc]
+	end
+	local numOfTricks = 0
+	for _,o in ipairs(trickZones[pc].getObjects()) do
+		if o.type == "Card" or o.type == "Deck" then
+			numOfTricks = numOfTricks + 1
+		end
+	end
+
+	for _,o in ipairs(centerZone.getObjects()) do
+		if o.type == "Card" then
+  			o.setRotationSmooth({0,ROTATIONS[pc],180})
+				tpp = trickPlaces[pc].getPosition()
+				newPos1 = tpp[1] + (numOfTricks * rightDir[pc][1])
+				newPos2 = tpp[2] + (numOfTricks * rightDir[pc][2])
+				newPos3 = tpp[3] + (numOfTricks * rightDir[pc][3])
+				newPos = {newPos1, newPos2, newPos3}
+  			o.setPositionSmooth(newPos, false, false)
+		end
+	end
+	if TAKING_TRICK then
+		startLuaCoroutine(Global, "trickwait") -- wait a second before resetting the TAKING_TRICK variable
+	end
+end
+
+function trickwait()
+	wait(60)
+	TAKING_TRICK = false
+	return 1
+end
+
+function gather()
+    setStartButtons()
+    UI.setAttribute("deal", "interactable", "true")
+    PASS_COUNTER = 0
+    DEALT = false
+	cancelTrump()
+    UI.setAttributes("suitTable", {offsetXY="750 250", visibility="Black"})
+	local deck = getDeck()
+    for i,o in pairs(getAllObjects()) do
+        if o.type == "Card" or o.type == "Deck" then
+            o.setRotation({180,0,0})
+            o.setPosition({0, 1.2, 0})
+        end
+    end
+end
+
+function dealCards(player)
+    DEALING = true
+    UI.setAttribute("deal", "interactable", "false")
+    local pc = player.color
+	chip.setPositionSmooth({chipZones[pc].getPosition()[1], 0.98, chipZones[pc].getPosition()[3]}, false, false)
+	chip.setRotationSmooth({0, ROTATIONS[pc], 0}, false, false)
+    currentPlayer = NEXT_PLAYER[pc] -- start dealing left of dealer
+	startLuaCoroutine(Global, "dealtheCards")
+end
+
+function dealtheCards()
+    local rep = 1
+    local dealPattern = {3, 2, 3, 2, 2, 3, 2, 3}
+	local deck = getDeck()
+	deck.randomize()
+	wait(5)
+    deck.randomize()
+	while rep < 9 do -- go around the table twice, 1 - 9
+		for i=1,dealPattern[rep] do
+			deck.deal(1, currentPlayer)
+			wait(6)
+		end
+		currentPlayer = NEXT_PLAYER[currentPlayer]
+		if rep == 8 then
+			deck.takeObject({
+				position = {deck.getPosition()[1], 2, deck.getPosition()[3]},
+				flip = true,
+				smooth = true
+			})
+		end
+		rep = rep + 1
+	end
+    wait(40)
+    DEALT = true
+    DEALING = false
+    local p = NEXT_PLAYER[findCurrentDealer()]
+    local msg = (Player[p].steam_name or p) .. ' is choosing what to do.'
+    broadcastToAll(msg, p)
+    decideTrump(p)
+	return 1
+end

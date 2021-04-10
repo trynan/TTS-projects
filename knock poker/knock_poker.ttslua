@@ -1,4 +1,5 @@
 -- script by trynan
+-- requires checker.ttslua, counter.ttslua, view_hands.ttslua, and local_pos.ttslua
 
 local chipGUID = "e2245e"
 local knockCubeGUID = "904cc4"

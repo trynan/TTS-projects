@@ -19,6 +19,9 @@ end
 
 function RotMatrix(ang_deg)
     local ang = math.rad(ang_deg)
+    -- basic 2D rotation matrix but with negative angle inputs
+    -- since we're rotating clockwise. cos(-ang) = cos(ang) but
+    -- sin(-ang) = -sin(ang).
     local rot_mat = {
         { math.cos(ang), math.sin(ang)},
         {-math.sin(ang), math.cos(ang)}

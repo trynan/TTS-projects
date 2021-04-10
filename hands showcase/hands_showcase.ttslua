@@ -1,4 +1,5 @@
 -- script by trynan
+-- requires local_pos.ttslua and view_hands.ttslua
 -- local position script adapted from dzikakulka
 
 local deckZoneGUID = "e5f68a"
