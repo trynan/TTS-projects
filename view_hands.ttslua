@@ -8,6 +8,7 @@
 -- GATHERING - bool of whether deck is currently being reset
 -- invisCardCount - list of scripting zones that contain all invisible
     -- cards in front of players (indexes are player colors)
+require("local_pos")
 
 function spawn_card(p, c) -- p is player, c is card
     local rot = invisCardPlace[p].getRotation()

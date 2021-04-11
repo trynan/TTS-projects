@@ -1,5 +1,7 @@
 -- script by trynan
 -- requires trump.ttslua and local_pos.ttslua
+require("euchre.trump")
+require("local_pos")
 
 local centerZoneGUID = "723e10"
 local dealerChipGUID = "e2245e"
@@ -37,6 +39,7 @@ function onLoad()
     chip = getObjectFromGUID(dealerChipGUID)
     chip.setPosition({3, 0.98, -3})
     chip.setRotation({0, 0, 0})
+    getDeck().randomize()
 end
 
 function wait(n)

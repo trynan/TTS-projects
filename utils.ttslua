@@ -1,0 +1,33 @@
+function newNextPlayers()
+    local np = {}
+    for n,player in pairs(getSeatedPlayers()) do
+        np[player] = getSeatedPlayers()[n+1]
+    end
+    np[getSeatedPlayers()[#getSeatedPlayers()]] = getSeatedPlayers()[1]
+    return np
+end
+
+function wait(n)
+    for i=1,n do
+        coroutine.yield()
+    end
+end
+
+function getDeck(zone)
+    for _,o in ipairs(zone.getObjects()) do
+        if o.type == "Deck" then
+            return o
+        end
+    end
+    return nil
+end
+
+function spectate(player)
+    if player.color != 'Grey' then
+        local msg = Player[player.color].steam_name .. " is now spectating."
+        Player[player.color].changeColor('Grey')
+        broadcastToAll(msg, 'Grey')
+    else
+        broadcastToColor('You are already spectating!', player.color, player.color)
+    end
+end

@@ -1,5 +1,6 @@
 -- script by trynan
--- requires checker.ttslua, counter.ttslua, view_hands.ttslua, and local_pos.ttslua
+require("view_hands")
+require("utils")
 
 local chipGUID = "e2245e"
 local knockCubeGUID = "904cc4"
@@ -41,30 +42,7 @@ function onLoad()
     knockCube.setPosition({-4.14, 2.05, 0.00})
     chip.setPosition({0.00, 1.25, -4.52})
     chip.setRotation({0, 0, 0})
-end
-
-function newNextPlayers()
-    local np = {}
-    for n,player in pairs(getSeatedPlayers()) do
-        np[player] = getSeatedPlayers()[n+1]
-    end
-    np[getSeatedPlayers()[#getSeatedPlayers()]] = getSeatedPlayers()[1]
-    return np
-end
-
-function wait(n)
-    for i=1,n do
-        coroutine.yield()
-    end
-end
-
-function getDeck(zone)
-    for _,o in ipairs(zone.getObjects()) do
-        if o.type == "Deck" then
-            return o
-        end
-    end
-    return nil
+    getDeck(deckZone).randomize()
 end
 
 function knock(player)

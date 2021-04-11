@@ -1,3 +1,7 @@
+-- script by trynan
+require("view_hands")
+require("utils")
+
 PLAYER_COLORS = {"White", "Red", "Yellow", "Green", "Blue", "Pink"}
 NEXT = {}
 
@@ -31,37 +35,23 @@ function onLoad()
     NEXT["Pink"] = "White"
     deckZone = getObjectFromGUID(deckZoneGUID)
     treasury = getObjectFromGUID(treasuryGUID)
+    getDeck(deckZone).randomize()
 end
 
-function newNextPlayerList()
-    local np = {}
-    if #getSeatedPlayers() > 1 then
-        for n,player in pairs(getSeatedPlayers()) do
-            print(player)
-            np[player] = getSeatedPlayers()[n+1]
-        end
-        np[getSeatedPlayers()[#getSeatedPlayers()]] = getSeatedPlayers()[1]
-        return np
-    else
-        np[getSeatedPlayers()[1]] = getSeatedPlayers()[1]
-        return np
-    end
-end
-
-function wait(n)
-    for i=1,n do
-        coroutine.yield()
-    end
-end
-
-function getDeck(zone)
-    for _,o in ipairs(zone.getObjects()) do
-        if o.type == "Deck" then
-            return o
-        end
-    end
-    return nil
-end
+-- function newNextPlayerList()
+--     local np = {}
+--     if #getSeatedPlayers() > 1 then
+--         for n,player in pairs(getSeatedPlayers()) do
+--             print(player)
+--             np[player] = getSeatedPlayers()[n+1]
+--         end
+--         np[getSeatedPlayers()[#getSeatedPlayers()]] = getSeatedPlayers()[1]
+--         return np
+--     else
+--         np[getSeatedPlayers()[1]] = getSeatedPlayers()[1]
+--         return np
+--     end
+-- end
 
 function gather()
     GATHERING = true
@@ -109,7 +99,7 @@ end
 
 function deal_cards_cr()
     -- create new list of "next player" based on who is seated
-    newPlayerList = newNextPlayerList()
+    newPlayerList = newNextPlayers()
     for i,o in pairs(deckZone.getObjects()) do
         if o.type == "Deck" then
             deck = o
