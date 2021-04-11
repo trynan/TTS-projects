@@ -1,56 +1,56 @@
 local num = 0
 self.createButton({
-	click_function = "add",
-	label          = "+",
-	function_owner = self,
-	position       = {-1.2, 0.5, 0},
-	rotation 	   = {0, 180, 0},
-	color		   = "Black",
-	font_color	   = "White",
-	width          = 350,
-	height         = 350,
-	font_size      = 350,
-	tooltip 	   = "+"
+    click_function = "add",
+    label          = "+",
+    function_owner = self,
+    position       = {-1.2, 0.5, 0},
+    rotation       = {0, 180, 0},
+    color          = "Black",
+    font_color     = "White",
+    width          = 350,
+    height         = 350,
+    font_size      = 350,
+    tooltip        = "+"
 })
 self.createButton({
-	click_function = "sub",
-	label          = "-",
-	function_owner = self,
-	position       = {1.2, 0.5, 0},
-	rotation 	   = {0, 180, 0},
-	color		   = "Black",
-	font_color	   = "White",
-	width          = 350,
-	height         = 350,
-	font_size      = 350,
-	tooltip 	   = "-"
+    click_function = "sub",
+    label          = "-",
+    function_owner = self,
+    position       = {1.2, 0.5, 0},
+    rotation       = {0, 180, 0},
+    color          = "Black",
+    font_color     = "White",
+    width          = 350,
+    height         = 350,
+    font_size      = 350,
+    tooltip        = "-"
 })
 self.createButton({
-	click_function = "nothin",
-	label          = num,
-	function_owner = self,
-	position       = {0, 0.5, 0},
-	rotation 	   = {0, 180, 0},
-	color		   = "Black",
-	font_color	   = "White",
-	width          = 550,
-	height         = 550,
-	font_size      = 400,
-	tooltip		   = num
+    click_function = "nothin",
+    label          = num,
+    function_owner = self,
+    position       = {0, 0.5, 0},
+    rotation       = {0, 180, 0},
+    color          = "Black",
+    font_color     = "White",
+    width          = 550,
+    height         = 550,
+    font_size      = 400,
+    tooltip        = num
 })
 
 function add()
-	if num ~= 10 then
-		editbutton(1)
-	end
+    if num ~= 10 then
+        editbutton(1)
+    end
 end
 function sub()
-	if num ~= 0 then
-		editbutton(-1)
-	end
+    if num ~= 0 then
+        editbutton(-1)
+    end
 end
 function editbutton(n)
-	num = num + n
-	self.editButton({index = 2, label = num, tooltip = num})
+    num = num + n
+    self.editButton({index = 2, label = num, tooltip = num})
 end
 function nothin() end

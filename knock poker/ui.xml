@@ -4,7 +4,7 @@
     width="150"
     height="50"
     fontsize="24"
-	offsetXY="775 -180"
+    offsetXY="775 -180"
     >
 Reset Deck</Button>
 
@@ -15,7 +15,7 @@ Reset Deck</Button>
     width="150"
     height="50"
     fontsize="24"
-	offsetXY="775 60"
+    offsetXY="775 60"
     >
 Deal</Button>
 
@@ -26,8 +26,8 @@ Deal</Button>
     width="150"
     height="50"
     fontsize="24"
-	offsetXY="775 0"
-	interactable="false"
+    offsetXY="775 0"
+    interactable="false"
     >
 Knock</Button>
 

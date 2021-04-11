@@ -4,7 +4,7 @@
     width="150"
     height="50"
     fontsize="24"
-	offsetXY="775 -180"
+    offsetXY="775 -180"
     >
 Reset Deck</Button>
 
@@ -15,7 +15,7 @@ Reset Deck</Button>
     width="150"
     height="50"
     fontsize="24"
-	offsetXY="775 60"
+    offsetXY="775 60"
     >
 Deal</Button>
 
@@ -26,7 +26,7 @@ Deal</Button>
     width="150"
     height="50"
     fontsize="24"
-	offsetXY="775 0"
+    offsetXY="775 0"
     >
 Take Trick</Button>
 
@@ -43,24 +43,24 @@ Take Trick</Button>
     <Row id="row1" active="false" preferredHeight="50">
         <Cell columnspan="2"><Button
             id="cancel"
-        	fontsize="24"
+            fontsize="24"
             color="#FF8080"
-        	onClick="cancelTrump"
+            onClick="cancelTrump"
         >Reset Trump</Button></Cell>
     </Row>
 
     <!-- Row 2 -->
     <Row id="row2" active="false" preferredHeight="100">
         <Cell><Button
-        	id="hearts"
-        	fontsize="20"
-        	onClick="chooseTrump(hearts)"
+            id="hearts"
+            fontsize="20"
+            onClick="chooseTrump(hearts)"
             image="hearts"
         ></Button></Cell>
         <Cell><Button
-        	id="diamonds"
-        	fontsize="20"
-        	onClick="chooseTrump(diamonds)"
+            id="diamonds"
+            fontsize="20"
+            onClick="chooseTrump(diamonds)"
             image="diamonds"
         ></Button></Cell>
     </Row>
@@ -68,15 +68,15 @@ Take Trick</Button>
     <!-- Row 3 -->
     <Row id="row3" active="false" preferredHeight="100">
         <Cell><Button
-        	id="spades"
-        	fontsize="20"
-        	onClick="chooseTrump(spades)"
+            id="spades"
+            fontsize="20"
+            onClick="chooseTrump(spades)"
             image="spades"
         ></Button></Cell>
         <Cell><Button
-        	id="clubs"
-        	fontsize="20"
-        	onClick="chooseTrump(clubs)"
+            id="clubs"
+            fontsize="20"
+            onClick="chooseTrump(clubs)"
             image="clubs"
         ></Button></Cell>
     </Row>

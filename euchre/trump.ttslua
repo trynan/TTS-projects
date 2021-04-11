@@ -93,22 +93,22 @@ function setPlayingButtons() -- which buttons are active during normal play
     UI.setAttribute("row4", "active", true)
     -- set all suit buttons to inactive state
     UI.setAttribute("clubs",    "interactable", false)
-	UI.setAttribute("diamonds", "interactable", false)
-	UI.setAttribute("spades",   "interactable", false)
-	UI.setAttribute("hearts",   "interactable", false)
+    UI.setAttribute("diamonds", "interactable", false)
+    UI.setAttribute("spades",   "interactable", false)
+    UI.setAttribute("hearts",   "interactable", false)
     UI.setAttribute("nosuit",   "interactable", false)
 
-	UI.setAttribute("cancel", "interactable", true)
+    UI.setAttribute("cancel", "interactable", true)
 end
 
 function cancelTrump()
-	UI.setAttribute("diamonds", "interactable", true)
+    UI.setAttribute("diamonds", "interactable", true)
     UI.setAttribute("spades",   "interactable", true)
     UI.setAttribute("clubs",    "interactable", true)
-	UI.setAttribute("hearts",   "interactable", true)
+    UI.setAttribute("hearts",   "interactable", true)
     UI.setAttribute("nosuit",   "interactable", true)
 
-	UI.setAttribute("cancel",   "interactable", false)
+    UI.setAttribute("cancel",   "interactable", false)
 end
 
 function nothin()

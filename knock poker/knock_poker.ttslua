@@ -15,40 +15,40 @@ local handZoneGUIDS = {"5f2903", "901020", "fb2a55", "8d5a9d", "00adfa", "892348
 function onLoad()
     DEALING = false
     GATHERING = false
-	ROTATIONS = {}
-	squareZones = {}
-	chipZones = {}
+    ROTATIONS = {}
+    squareZones = {}
+    chipZones = {}
     invisCardPlace = {}
     invisCardCount = {}
     cards = {}
     handZone = {}
     NEXT = {}
-	for i,player in ipairs(PLAYER_COLORS) do
-		ROTATIONS[player] = 45 * (i-1)
-		squareZones[player] = getObjectFromGUID(squareZoneGUIDS[i])
-		chipZones[player] = getObjectFromGUID(chipZoneGUIDS[i])
+    for i,player in ipairs(PLAYER_COLORS) do
+        ROTATIONS[player] = 45 * (i-1)
+        squareZones[player] = getObjectFromGUID(squareZoneGUIDS[i])
+        chipZones[player] = getObjectFromGUID(chipZoneGUIDS[i])
         invisCardPlace[player] = getObjectFromGUID(invisCardPlaceZoneGUIDS[i])
         invisCardCount[player] = getObjectFromGUID(invisCardCountZoneGUIDS[i])
         handZone[player] = getObjectFromGUID(handZoneGUIDS[i])
         cards[player] = 0
         NEXT[player] = PLAYER_COLORS[i + 1]
-	end
+    end
     NEXT["Pink"] = "White"
-	deckZone = getObjectFromGUID(deckZoneGUID)
-	chip = getObjectFromGUID(chipGUID)
-	knockCube = getObjectFromGUID(knockCubeGUID)
+    deckZone = getObjectFromGUID(deckZoneGUID)
+    chip = getObjectFromGUID(chipGUID)
+    knockCube = getObjectFromGUID(knockCubeGUID)
 
-	knockCube.setPosition({-4.14, 2.05, 0.00})
-	chip.setPosition({0.00, 1.25, -4.52})
-	chip.setRotation({0, 0, 0})
+    knockCube.setPosition({-4.14, 2.05, 0.00})
+    chip.setPosition({0.00, 1.25, -4.52})
+    chip.setRotation({0, 0, 0})
 end
 
 function newNextPlayers()
     local np = {}
-	for n,player in pairs(getSeatedPlayers()) do
-		np[player] = getSeatedPlayers()[n+1]
-	end
-	np[getSeatedPlayers()[#getSeatedPlayers()]] = getSeatedPlayers()[1]
+    for n,player in pairs(getSeatedPlayers()) do
+        np[player] = getSeatedPlayers()[n+1]
+    end
+    np[getSeatedPlayers()[#getSeatedPlayers()]] = getSeatedPlayers()[1]
     return np
 end
 
@@ -68,16 +68,16 @@ function getDeck(zone)
 end
 
 function knock(player)
-	knockCube.setPositionSmooth({squareZones[player.color].getPosition()[1], 6, squareZones[player.color].getPosition()[3]}, false, false)
-	knockCube.setRotation({0, ROTATIONS[player.color], 0})
-	msg = Player[player.color].steam_name .. " has knocked!"
-	broadcastToAll(msg, player.color)
+    knockCube.setPositionSmooth({squareZones[player.color].getPosition()[1], 6, squareZones[player.color].getPosition()[3]}, false, false)
+    knockCube.setRotation({0, ROTATIONS[player.color], 0})
+    msg = Player[player.color].steam_name .. " has knocked!"
+    broadcastToAll(msg, player.color)
 end
 
 function gather()
     GATHERING = true
     UI.setAttribute("knock", "interactable", "false")
-	UI.setAttribute("deal", "interactable", "true")
+    UI.setAttribute("deal", "interactable", "true")
     knockCube.setPosition({-4.14, 2.05, 0.00})
     knockCube.setRotation({0, 0, 0})
     for i,o in ipairs(getAllObjects()) do
@@ -114,48 +114,48 @@ end
 
 function dealCards(player)
     c = player.color
-	UI.setAttribute("knock", "interactable", "true")
-	UI.setAttribute("deal", "interactable", "false")
-	chip.setPositionSmooth({chipZones[c].getPosition()[1], 0.96, chipZones[c].getPosition()[3]}, false, false)
-	chip.setRotation({0, ROTATIONS[c], 0})
-	startLuaCoroutine(Global, "deal_cards_cr")
+    UI.setAttribute("knock", "interactable", "true")
+    UI.setAttribute("deal", "interactable", "false")
+    chip.setPositionSmooth({chipZones[c].getPosition()[1], 0.96, chipZones[c].getPosition()[3]}, false, false)
+    chip.setRotation({0, ROTATIONS[c], 0})
+    startLuaCoroutine(Global, "deal_cards_cr")
 end
 
 function deal_cards_cr()
     DEALING = true
-	-- create new list of "next player" based on who is seated
+    -- create new list of "next player" based on who is seated
     newNextPlayerList = newNextPlayers()
-	for _,o in ipairs(deckZone.getObjects()) do
-		if o.type == "Deck" and o.getScale()[1] > 1 then
-			o.randomize()
-			wait(10)
-			p = c -- p starts as the color that pressed the button
-			while #o.getObjects() > (52 - (5 * #getSeatedPlayers())) do
-				wait(2)
-				p = newNextPlayerList[p] -- make p the next player to get the card after each iteration
-				o.deal(1, p)
-			end
-			o.takeObject({
-				position = {4.13, 2, 0.00},
-				flip = true,
-				smooth = true
-			})
-		end
-	end
+    for _,o in ipairs(deckZone.getObjects()) do
+        if o.type == "Deck" and o.getScale()[1] > 1 then
+            o.randomize()
+            wait(10)
+            p = c -- p starts as the color that pressed the button
+            while #o.getObjects() > (52 - (5 * #getSeatedPlayers())) do
+                wait(2)
+                p = newNextPlayerList[p] -- make p the next player to get the card after each iteration
+                o.deal(1, p)
+            end
+            o.takeObject({
+                position = {4.13, 2, 0.00},
+                flip = true,
+                smooth = true
+            })
+        end
+    end
     DEALING = false
-	return 1
+    return 1
 end
 
 function spectate(player)
-	if player.color != 'Grey' then
-		local msg = Player[player.color].steam_name .. " is now spectating."
-		Player[player.color].changeColor('Grey')
-		broadcastToAll(msg, 'Grey')
-	else
-		broadcastToColor('You are already spectating!', player.color, player.color)
-	end
+    if player.color != 'Grey' then
+        local msg = Player[player.color].steam_name .. " is now spectating."
+        Player[player.color].changeColor('Grey')
+        broadcastToAll(msg, 'Grey')
+    else
+        broadcastToColor('You are already spectating!', player.color, player.color)
+    end
 end
 
 function nothin()
-	return 1
+    return 1
 end

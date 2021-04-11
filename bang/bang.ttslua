@@ -12,37 +12,37 @@ local discard_zone_guid = "112108"
 local first4_roles_zone_guid = "146fed"
 
 function onLoad()
-	-- reset camera hotkey
-	addHotkey("Reset Camera", onPlayerChangeColor)
+    -- reset camera hotkey
+    addHotkey("Reset Camera", onPlayerChangeColor)
 
-	-- get all scripting zones from guid (and player health counters)
-	healthvals = {}
-	backplate = {}
-	last3RolesZone = {}
-	extraRolesZone = {}
-	playerHealthCounter = {}
-	for i,player in ipairs(PLAYER_COLORS) do
-		backplate[player] = getObjectFromGUID(backplate_guids[i])
-		playerHealthCounter[player] = getObjectFromGUID(player_health_counter_guids[i])
-		healthvals[player] = 3
-	end
-	for i=1,3 do
-		last3RolesZone[i] = getObjectFromGUID(last3_roles_zone_guids[i])
-		extraRolesZone[i] = getObjectFromGUID(extra_roles_zone_guids[i])
-	end
+    -- get all scripting zones from guid (and player health counters)
+    healthvals = {}
+    backplate = {}
+    last3RolesZone = {}
+    extraRolesZone = {}
+    playerHealthCounter = {}
+    for i,player in ipairs(PLAYER_COLORS) do
+        backplate[player] = getObjectFromGUID(backplate_guids[i])
+        playerHealthCounter[player] = getObjectFromGUID(player_health_counter_guids[i])
+        healthvals[player] = 3
+    end
+    for i=1,3 do
+        last3RolesZone[i] = getObjectFromGUID(last3_roles_zone_guids[i])
+        extraRolesZone[i] = getObjectFromGUID(extra_roles_zone_guids[i])
+    end
 
-	charDeckZone = getObjectFromGUID(char_deck_zone_guid)
-	roleDeckZone = getObjectFromGUID(role_deck_zone_guid)
-	wwsCardZone = getObjectFromGUID(wws_card_zone_guid)
-	bangDeckZone = getObjectFromGUID(bang_deck_zone_guid)
-	discardZone = getObjectFromGUID(discard_zone_guid)
-	first4RolesZone = getObjectFromGUID(first4_roles_zone_guid)
+    charDeckZone = getObjectFromGUID(char_deck_zone_guid)
+    roleDeckZone = getObjectFromGUID(role_deck_zone_guid)
+    wwsCardZone = getObjectFromGUID(wws_card_zone_guid)
+    bangDeckZone = getObjectFromGUID(bang_deck_zone_guid)
+    discardZone = getObjectFromGUID(discard_zone_guid)
+    first4RolesZone = getObjectFromGUID(first4_roles_zone_guid)
 
-	-- set yaw values
-	yw = {White=0, Orange=0, Yellow=0, Red=90, Teal=180, Pink=180, Green=180}
+    -- set yaw values
+    yw = {White=0, Orange=0, Yellow=0, Red=90, Teal=180, Pink=180, Green=180}
 
-	-- enable turns by default
-	Turns.enable = true
+    -- enable turns by default
+    Turns.enable = true
 end
 
 --------------------------------------------------------------------
@@ -51,249 +51,249 @@ end
 
 function changeHealth(p)
     --[[ p[2] is the color, p[1] is the num to change the value by --]]
-	healthvals[p[2]] = healthvals[p[2]] + p[1]
+    healthvals[p[2]] = healthvals[p[2]] + p[1]
 end
 
 function getDeck(zone)
-	--[[ find one deck or one card in given scripting zone and return it.
-	if there are no cards or decks in the zone, return nil. --]]
-	for _,d in ipairs(zone.getObjects()) do
-		if d.type == "Deck" then
-			return d
-		end
-	end
-	for _,d in ipairs(zone.getObjects()) do
-		if d.type == "Card" then
-			return d
-		end
-	end
-	return nil
+    --[[ find one deck or one card in given scripting zone and return it.
+    if there are no cards or decks in the zone, return nil. --]]
+    for _,d in ipairs(zone.getObjects()) do
+        if d.type == "Deck" then
+            return d
+        end
+    end
+    for _,d in ipairs(zone.getObjects()) do
+        if d.type == "Card" then
+            return d
+        end
+    end
+    return nil
 end
 
 function deckExists(zone)
-	--[[ return bool of whether a deck or card exists in the given zone. --]]
-	return getDeck(zone) != nil
+    --[[ return bool of whether a deck or card exists in the given zone. --]]
+    return getDeck(zone) != nil
 end
 
 function wait(n)
-	--[[ only callable from within a coroutine. pauses coroutine for n frames. --]]
-	for i=1,n do
-		coroutine.yield(0)
-	end
+    --[[ only callable from within a coroutine. pauses coroutine for n frames. --]]
+    for i=1,n do
+        coroutine.yield(0)
+    end
 end
 
 
 function setRoles()
-	--[[ based on the number of seated players, set the roles
-	that will be active in the game. flip those roles and put them
-	next to character deck. put extra roles off to the side. --]]
-	playernum = #getSeatedPlayers()
-	msg = "The number of players is " .. playernum .."."
-	if playernum == 4 then
-		msg = msg .. " You are playing with two outlaws and zero deputies."
-	elseif playernum == 5 then
-		msg = msg .. " You are playing with two outlaws and one deputy."
-	elseif playernum == 6 then
-		msg = msg .. " You are playing with three outlaws and one deputy."
-	elseif playernum == 7 then
-		msg = msg .. " You are playing with three outlaws and two deputies."
-	else
-		msg = "The number of players is invalid."
-	end
-	broadcastToAll(msg)
-	if msg ~= "The number of players is invalid." then
-		UI.setAttribute("setroles", "interactable", "false")
-		UI.setAttribute("dealroles", "interactable", "true")
-		startLuaCoroutine(Global, "set_roles_cr")
-	end
+    --[[ based on the number of seated players, set the roles
+    that will be active in the game. flip those roles and put them
+    next to character deck. put extra roles off to the side. --]]
+    playernum = #getSeatedPlayers()
+    msg = "The number of players is " .. playernum .."."
+    if playernum == 4 then
+        msg = msg .. " You are playing with two outlaws and zero deputies."
+    elseif playernum == 5 then
+        msg = msg .. " You are playing with two outlaws and one deputy."
+    elseif playernum == 6 then
+        msg = msg .. " You are playing with three outlaws and one deputy."
+    elseif playernum == 7 then
+        msg = msg .. " You are playing with three outlaws and two deputies."
+    else
+        msg = "The number of players is invalid."
+    end
+    broadcastToAll(msg)
+    if msg ~= "The number of players is invalid." then
+        UI.setAttribute("setroles", "interactable", "false")
+        UI.setAttribute("dealroles", "interactable", "true")
+        startLuaCoroutine(Global, "set_roles_cr")
+    end
 end
 
 function set_roles_cr()
-	-- use the first four roles no matter what
-	for _,o in ipairs(first4RolesZone.getObjects()) do
-		if o.type == "Card" then
-			o.setLock(false)
-			o.flip()
-			o.setPositionSmooth(roleDeckZone.getPosition(), false, false)
-		end
-	end
-	if playernum > 4 then
-		numofextracards = playernum - 4
-		for i=1,numofextracards do
-			local d = getDeck(last3RolesZone[i])
-			d.setLock(false)
-			d.flip()
-			d.setPositionSmooth(roleDeckZone.getPosition(), false, false)
-		end
-	end
-	-- move remaining cards
-	wait(30)
-	for i,n in ipairs(last3RolesZone) do
-		if deckExists(n) then
-			local d = getDeck(n)
-			d.setPositionSmooth(extraRolesZone[i].getPosition(), false, false)
-			d.setLock(true)
-		end
-	end
-	-- destruct unused player plates
-	for i,p in ipairs(PLAYER_COLORS) do
-		local found = false
-		for j,s in pairs(getSeatedPlayers()) do
-			if p == s then
-				found = true
-				break
-			end
-		end
-		if not found then
-			playerHealthCounter[p].destruct()
-			backplate[p].destruct()
-		end
-	end
-	return 1
+    -- use the first four roles no matter what
+    for _,o in ipairs(first4RolesZone.getObjects()) do
+        if o.type == "Card" then
+            o.setLock(false)
+            o.flip()
+            o.setPositionSmooth(roleDeckZone.getPosition(), false, false)
+        end
+    end
+    if playernum > 4 then
+        numofextracards = playernum - 4
+        for i=1,numofextracards do
+            local d = getDeck(last3RolesZone[i])
+            d.setLock(false)
+            d.flip()
+            d.setPositionSmooth(roleDeckZone.getPosition(), false, false)
+        end
+    end
+    -- move remaining cards
+    wait(30)
+    for i,n in ipairs(last3RolesZone) do
+        if deckExists(n) then
+            local d = getDeck(n)
+            d.setPositionSmooth(extraRolesZone[i].getPosition(), false, false)
+            d.setLock(true)
+        end
+    end
+    -- destruct unused player plates
+    for i,p in ipairs(PLAYER_COLORS) do
+        local found = false
+        for j,s in pairs(getSeatedPlayers()) do
+            if p == s then
+                found = true
+                break
+            end
+        end
+        if not found then
+            playerHealthCounter[p].destruct()
+            backplate[p].destruct()
+        end
+    end
+    return 1
 end
 
 function dealRoles()
-	--[[ randomize all decks, put wws card on bottom of wws deck, and deal
-	one role card and two character cards to each seated player. --]]
-	UI.setAttribute("dealroles", "interactable", "false")
-	UI.setAttribute("dealcards", "interactable", "true")
-	startLuaCoroutine(Global, "deal_roles_cr")
+    --[[ randomize all decks, put wws card on bottom of wws deck, and deal
+    one role card and two character cards to each seated player. --]]
+    UI.setAttribute("dealroles", "interactable", "false")
+    UI.setAttribute("dealcards", "interactable", "true")
+    startLuaCoroutine(Global, "deal_roles_cr")
 end
 
 function deal_roles_cr()
-	-- shuffle wws deck, put wws on bottom
-	for _,o in ipairs(wwsCardZone.getObjects()) do
-		if o.type == "Deck" then
-			o.randomize()
-			o.setPositionSmooth({o.getPosition()[1], 5, o.getPosition()[3]})
-		elseif o.type == "Card" then
-			o.setLock(false)
-			o.flip()
-			o.setPositionSmooth({-2.89, 1.63, 0.00})
-		end
-	end
-	local rdeck = getDeck(roleDeckZone)
-	local cdeck = getDeck(charDeckZone)
-	-- shuffle decks
-	getDeck(bangDeckZone).randomize()
-	cdeck.randomize()
-	rdeck.randomize()
-	-- wait 10 frames for randomize animation to play
-	wait(10)
-	for n=1,10 do
-			coroutine.yield(0)
-	end
-	-- deal one role card to each seated player
-	local nsp = #getSeatedPlayers()
-	for n=1, nsp do
-		rdeck.deal(1, getSeatedPlayers()[n])
-		if rdeck == nil then -- last card, wait a sec for the 2nd to last card to be dealt
-			wait(4)
-			getDeck(roleDeckZone).deal(1, getSeatedPlayers()[n])
-	    end
-	    wait(2)
-	end
-	-- deal two character cards to each seated player, going around the table twice
-	for n=1, nsp * 2 do
-		cdeck.deal(1, getSeatedPlayers()[(n % nsp) + 1])
-		wait(2)
-	end
-	return 1
+    -- shuffle wws deck, put wws on bottom
+    for _,o in ipairs(wwsCardZone.getObjects()) do
+        if o.type == "Deck" then
+            o.randomize()
+            o.setPositionSmooth({o.getPosition()[1], 5, o.getPosition()[3]})
+        elseif o.type == "Card" then
+            o.setLock(false)
+            o.flip()
+            o.setPositionSmooth({-2.89, 1.63, 0.00})
+        end
+    end
+    local rdeck = getDeck(roleDeckZone)
+    local cdeck = getDeck(charDeckZone)
+    -- shuffle decks
+    getDeck(bangDeckZone).randomize()
+    cdeck.randomize()
+    rdeck.randomize()
+    -- wait 10 frames for randomize animation to play
+    wait(10)
+    for n=1,10 do
+        coroutine.yield(0)
+    end
+    -- deal one role card to each seated player
+    local nsp = #getSeatedPlayers()
+    for n=1, nsp do
+        rdeck.deal(1, getSeatedPlayers()[n])
+        if rdeck == nil then -- last card, wait a sec for the 2nd to last card to be dealt
+            wait(4)
+            getDeck(roleDeckZone).deal(1, getSeatedPlayers()[n])
+        end
+        wait(2)
+    end
+    -- deal two character cards to each seated player, going around the table twice
+    for n=1, nsp * 2 do
+        cdeck.deal(1, getSeatedPlayers()[(n % nsp) + 1])
+        wait(2)
+    end
+    return 1
 end
 
 function dealCards()
-	--[[ based on the number on each seated players' health counter, deal that number
-	of cards to the corresponding player. --]]
-	resetButtons()
-	startLuaCoroutine(Global, "deal_cards_cr")
+    --[[ based on the number on each seated players' health counter, deal that number
+    of cards to the corresponding player. --]]
+    resetButtons()
+    startLuaCoroutine(Global, "deal_cards_cr")
 end
 
 function deal_cards_cr()
-	local d = getDeck(bangDeckZone)
-	local sp = getSeatedPlayers()
-	local nsp = #sp
-	local cards_in_hand = {}
+    local d = getDeck(bangDeckZone)
+    local sp = getSeatedPlayers()
+    local nsp = #sp
+    local cards_in_hand = {}
 
-	for _,k in ipairs(sp) do
-		cards_in_hand[k] = 0 -- set each players' current hand num to 0
-	end
-	for n=1, (nsp * 7) - 1 do -- loop through each seated player 7 times
-		local p = sp[(n % nsp) + 1] -- on each iteration go to next player
-		local php = healthvals[p]
-		if php >= 9 then -- if health is greater than 9 then only deal up to 5 cards
-			php = 5
-		end
-		if cards_in_hand[p] < php then -- keep dealing cards to player as long as their hand is smaller than their health
-			d.deal(1, p)
-			cards_in_hand[p] = cards_in_hand[p] + 1 -- add one to each players' hand num
-			wait(2)
-		end
-	end
-	return 1
+    for _,k in ipairs(sp) do
+        cards_in_hand[k] = 0 -- set each players' current hand num to 0
+    end
+    for n=1, (nsp * 7) - 1 do -- loop through each seated player 7 times
+        local p = sp[(n % nsp) + 1] -- on each iteration go to next player
+        local php = healthvals[p]
+        if php >= 9 then -- if health is greater than 9 then only deal up to 5 cards
+            php = 5
+        end
+        if cards_in_hand[p] < php then -- keep dealing cards to player as long as their hand is smaller than their health
+            d.deal(1, p)
+            cards_in_hand[p] = cards_in_hand[p] + 1 -- add one to each players' hand num
+            wait(2)
+        end
+    end
+    return 1
 end
 
 
 function draw2Cards(player)
-	draw(player.color, 2)
+    draw(player.color, 2)
 end
 
 function drawCard(player)
-	draw(player.color, 1)
+    draw(player.color, 1)
 end
 
 function draw(c, n)
-	--[[ color c draws n cards --]]
-	getDeck(bangDeckZone).deal(n, c)
-	local msg = Player[c].steam_name .. " draws " .. n .. " card(s)."
-	printToAll(msg, c)
+    --[[ color c draws n cards --]]
+    getDeck(bangDeckZone).deal(n, c)
+    local msg = Player[c].steam_name .. " draws " .. n .. " card(s)."
+    printToAll(msg, c)
 end
 
 function reshuffle()
-	--[[ flip the discard pile, shuffle it, and move it under the main bang deck. --]]
-	local discdeck= getDeck(discardZone)
-	local bangdeck = getDeck(bangDeckZone)
-	-- check if there are at least two cards in the discard zone
-	if deckExists(discardZone) and discdeck.type != "Card" then
-		deckpos = bangdeck.getPosition()
-		bangdeck.setPositionSmooth({deckpos[1], 5, deckpos[3]}, false, false)
-		discdeck.flip()
-		discdeck.randomize()
-		discdeck.setPositionSmooth(deckpos, false, false)
-	end
+    --[[ flip the discard pile, shuffle it, and move it under the main bang deck. --]]
+    local discdeck= getDeck(discardZone)
+    local bangdeck = getDeck(bangDeckZone)
+    -- check if there are at least two cards in the discard zone
+    if deckExists(discardZone) and discdeck.type != "Card" then
+        deckpos = bangdeck.getPosition()
+        bangdeck.setPositionSmooth({deckpos[1], 5, deckpos[3]}, false, false)
+        discdeck.flip()
+        discdeck.randomize()
+        discdeck.setPositionSmooth(deckpos, false, false)
+    end
 end
 
 function resetButtons()
     UI.setAttribute("setupButtonTable", "active", "false")
-	UI.setAttribute("draw2", "interactable", "true")
-	UI.setAttribute("draw1", "interactable", "true")
-	UI.setAttribute("reshuffle", "interactable", "true")
+    UI.setAttribute("draw2", "interactable", "true")
+    UI.setAttribute("draw1", "interactable", "true")
+    UI.setAttribute("reshuffle", "interactable", "true")
 end
 
 
 function onPlayerChangeColor(player_color)
-	--[[ set player's camera to view their backplate. --]]
-	if player_color != "Grey" and player_color != "Black" then
-		local c = player_color
-		local p = Player[c]
-		p.lookAt({
-			position = playerHealthCounter[c].getPosition(),
-			pitch = 60,
-			yaw = yw[c],
-			distance = 20
-		})
-	end
+    --[[ set player's camera to view their backplate. --]]
+    if player_color != "Grey" and player_color != "Black" then
+        local c = player_color
+        local p = Player[c]
+        p.lookAt({
+            position    = playerHealthCounter[c].getPosition(),
+            pitch       = 60,
+            yaw         = yw[c],
+            distance    = 20
+        })
+    end
 end
 
 function resetcam(player)
-	onPlayerChangeColor(player.color)
+    onPlayerChangeColor(player.color)
 end
 
 function spectate(player)
-	if player.color != 'Grey' then
-		local msg = Player[player.color].steam_name .. " is now spectating."
-		Player[player.color].changeColor('Grey')
-		broadcastToAll(msg, 'Grey')
-	else
-		broadcastToColor('You are already spectating!', player.color, player.color)
-	end
+    if player.color != 'Grey' then
+        local msg = Player[player.color].steam_name .. " is now spectating."
+        Player[player.color].changeColor('Grey')
+        broadcastToAll(msg, 'Grey')
+    else
+        broadcastToColor('You are already spectating!', player.color, player.color)
+    end
 end

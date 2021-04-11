@@ -11,8 +11,8 @@
             onClick="draw2Cards"
             fontsize="24"
             interactable="false"
-    		tooltip="Draw two cards from the main deck"
-    		tooltipPosition="Left"
+            tooltip="Draw two cards from the main deck"
+            tooltipPosition="Left"
         >Draw 2
         (start of turn)</Button></Cell>
     </Row>
@@ -21,9 +21,9 @@
             id="draw1"
             onClick="drawCard"
             fontsize="24"
-        	interactable="false"
-        	tooltip="Draw one card from the main deck"
-        	tooltipPosition="Left"
+            interactable="false"
+            tooltip="Draw one card from the main deck"
+            tooltipPosition="Left"
         >Draw 1</Button></Cell>
         <Cell><Button
             id="reshuffle"
@@ -38,9 +38,9 @@
         <Cell columnspan="2"><Button
             id="spec"
             onClick="spectate"
-        	fontsize="20"
-        	tooltip="After death, click to spectate"
-        	tooltipPosition="Below"
+            fontsize="20"
+            tooltip="After death, click to spectate"
+            tooltipPosition="Below"
         >Spectate</Button></Cell>
     </Row>
 </TableLayout>
@@ -57,8 +57,8 @@
             id="setroles"
             onClick="setRoles"
             fontsize="24"
-        	tooltip="Set the active roles based on the number of players"
-        	tooltipPosition="Left"
+            tooltip="Set the active roles based on the number of players"
+            tooltipPosition="Left"
         >Set Roles</Button></Cell>
     </Row>
     <Row>
@@ -66,9 +66,9 @@
             id="dealroles"
             onClick="dealRoles"
             fontsize="24"
-        	tooltip="Deal one role and two character cards to each seated player"
-        	tooltipPosition="Left"
-        	interactable="false"
+            tooltip="Deal one role and two character cards to each seated player"
+            tooltipPosition="Left"
+            interactable="false"
         >Deal Roles and Characters</Button></Cell>
     </Row>
     <Row>
@@ -76,32 +76,32 @@
             id="dealcards"
             onClick="dealCards"
             fontsize="24"
-        	tooltip="Deal cards equal to players' health to each seated player"
-        	tooltipPosition="Left"
-        	interactable="false"
+            tooltip="Deal cards equal to players' health to each seated player"
+            tooltipPosition="Left"
+            interactable="false"
         >Deal Initial Hands</Button></Cell>
     </Row>
 </TableLayout>
 
 
 <Button
-	id="resetButton"
-	onClick="resetButtons"
-	width="75"
-	height="50"
-	fontsize="16"
-	offsetXY="775 -400"
-	>
+    id="resetButton"
+    onClick="resetButtons"
+    width="75"
+    height="50"
+    fontsize="16"
+    offsetXY="775 -400"
+    >
 reset buttons</Button>
 
 <Button
     id="cam"
     onClick="resetcam"
     width="150"
-	height="75"
-	fontsize="24"
-	offsetXY="-400 -450"
-	tooltip="Reset camera back to your hand"
-	tooltipPosition="Left"
+    height="75"
+    fontsize="24"
+    offsetXY="-400 -450"
+    tooltip="Reset camera back to your hand"
+    tooltipPosition="Left"
     >
 Reset Camera</Button>
