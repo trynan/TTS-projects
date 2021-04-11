@@ -1,0 +1,107 @@
+<TableLayout
+    id="mainButtonTable"
+    offsetXY="750 -100"
+    height="400"
+    width="210"
+    rowBackgroundColor="White">
+
+    <Row id="row1">
+        <Cell columnspan="2"><Button
+            id="draw2"
+            onClick="draw2Cards"
+            fontsize="24"
+            interactable="false"
+    		tooltip="Draw two cards from the main deck"
+    		tooltipPosition="Left"
+        >Draw 2
+        (start of turn)</Button></Cell>
+    </Row>
+    <Row>
+        <Cell><Button
+            id="draw1"
+            onClick="drawCard"
+            fontsize="24"
+        	interactable="false"
+        	tooltip="Draw one card from the main deck"
+        	tooltipPosition="Left"
+        >Draw 1</Button></Cell>
+        <Cell><Button
+            id="reshuffle"
+            onClick="reshuffle"
+            fontsize="20"
+            interactable="false"
+            tooltip="Shuffle the discard pile and put it under the main deck"
+            tooltipPosition="Below"
+        >Reshuffle Deck</Button></Cell>
+    </Row>
+    <Row>
+        <Cell columnspan="2"><Button
+            id="spec"
+            onClick="spectate"
+        	fontsize="20"
+        	tooltip="After death, click to spectate"
+        	tooltipPosition="Below"
+        >Spectate</Button></Cell>
+    </Row>
+</TableLayout>
+
+<TableLayout
+    id="setupButtonTable"
+    offsetXY="570 -100"
+    height="400"
+    width="150"
+    rowBackgroundColor="White">
+
+    <Row>
+        <Cell><Button
+            id="setroles"
+            onClick="setRoles"
+            fontsize="24"
+        	tooltip="Set the active roles based on the number of players"
+        	tooltipPosition="Left"
+        >Set Roles</Button></Cell>
+    </Row>
+    <Row>
+        <Cell><Button
+            id="dealroles"
+            onClick="dealRoles"
+            fontsize="24"
+        	tooltip="Deal one role and two character cards to each seated player"
+        	tooltipPosition="Left"
+        	interactable="false"
+        >Deal Roles and Characters</Button></Cell>
+    </Row>
+    <Row>
+        <Cell><Button
+            id="dealcards"
+            onClick="dealCards"
+            fontsize="24"
+        	tooltip="Deal cards equal to players' health to each seated player"
+        	tooltipPosition="Left"
+        	interactable="false"
+        >Deal Initial Hands</Button></Cell>
+    </Row>
+</TableLayout>
+
+
+<Button
+	id="resetButton"
+	onClick="resetButtons"
+	width="75"
+	height="50"
+	fontsize="16"
+	offsetXY="775 -400"
+	>
+reset buttons</Button>
+
+<Button
+    id="cam"
+    onClick="resetcam"
+    width="150"
+	height="75"
+	fontsize="24"
+	offsetXY="-400 -450"
+	tooltip="Reset camera back to your hand"
+	tooltipPosition="Left"
+    >
+Reset Camera</Button>

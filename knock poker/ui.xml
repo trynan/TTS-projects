@@ -1,0 +1,42 @@
+<Button
+    id="gather"
+    onClick="gather"
+    width="150"
+    height="50"
+    fontsize="24"
+	offsetXY="775 -180"
+    >
+Reset Deck</Button>
+
+
+<Button
+    id="deal"
+    onClick="dealCards"
+    width="150"
+    height="50"
+    fontsize="24"
+	offsetXY="775 60"
+    >
+Deal</Button>
+
+
+<Button
+    id="knock"
+    onClick="knock"
+    width="150"
+    height="50"
+    fontsize="24"
+	offsetXY="775 0"
+	interactable="false"
+    >
+Knock</Button>
+
+<Button
+    id="spec"
+    onClick="spectate"
+    width="150"
+    height="50"
+    fontsize="24"
+    offsetXY="775 250"
+    >
+Spectate</Button>

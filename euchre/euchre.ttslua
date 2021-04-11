@@ -90,7 +90,7 @@ function takeTrick(player)
         return 1
 	end
 
-    local msg = player.color .. ' took the trick.'
+    local msg = (Player[player.color].steam_name or player.color) .. ' took the trick.'
     broadcastToAll(msg, player.color)
 	local pc = player.color
 	if findPartnerTricks(pc) then -- if partner has already taken tricks then send tricks their way instead

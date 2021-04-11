@@ -1,0 +1,137 @@
+PLAYER_COLORS = {"White", "Red", "Yellow", "Green", "Blue", "Pink"}
+NEXT = {}
+
+deckZoneGUID = "e5f68a"
+treasuryGUID = "bc0d16"
+actionsCardGUID = "ff36a7"
+firstCoinGUIDS = {"7778ce", "8a254b", "6669ff", "d6a11e", "b5d559", "62de80"} -- location of first coin on deal
+handZoneGUIDS = {"7b4421", "d6f28d", "160a33", "7e3fef", "a35353", "f4e586"}
+invisCardPlaceGUIDS = {"81f789", "959ba2", "589626", "0984ae", "ecd8fa", "c2b845"}
+invisCardCountGUIDS = {"77b874", "66c28e", "50869f", "c745e7", "a5dbb7", "561fae"}
+
+function onLoad()
+    GATHERING = false
+	PLAYER_ROTATIONS = {}
+	firstCoin = {}
+	coins = {}
+    cards = {}
+    handZone = {}
+    invisCardPlace = {}
+    invisCardCount = {}
+	for i,player in ipairs(PLAYER_COLORS) do
+        NEXT[player] = PLAYER_COLORS[i + 1]
+		PLAYER_ROTATIONS[player] = 45 * (i-1)
+		firstCoin[player] = getObjectFromGUID(firstCoinGUIDS[i])
+		coins[player] = 0
+        cards[player] = 0
+        handZone[player] = getObjectFromGUID(handZoneGUIDS[i])
+        invisCardPlace[player] = getObjectFromGUID(invisCardPlaceGUIDS[i])
+        invisCardCount[player] = getObjectFromGUID(invisCardCountGUIDS[i])
+	end
+    NEXT["Pink"] = "White"
+	deckZone = getObjectFromGUID(deckZoneGUID)
+	treasury = getObjectFromGUID(treasuryGUID)
+end
+
+function newNextPlayerList()
+	local np = {}
+    if #getSeatedPlayers() > 1 then
+    	for n,player in pairs(getSeatedPlayers()) do
+            print(player)
+    		np[player] = getSeatedPlayers()[n+1]
+    	end
+    	np[getSeatedPlayers()[#getSeatedPlayers()]] = getSeatedPlayers()[1]
+    	return np
+    else
+        np[getSeatedPlayers()[1]] = getSeatedPlayers()[1]
+        return np
+    end
+end
+
+function wait(n)
+	for i=1,n do
+		coroutine.yield()
+	end
+end
+
+function getDeck(zone)
+    for _,o in ipairs(zone.getObjects()) do
+        if o.type == "Deck" then
+            return o
+        end
+    end
+    return nil
+end
+
+function gather()
+    GATHERING = true
+    for i,o in ipairs(getAllObjects()) do
+        if o.type == "Deck" then
+            if o.getScale()[1] > 1 then
+                o.setRotation({0, 180, 180})
+                o.setPosition({0, 1.5, 0})
+            else
+                o.destruct()
+            end
+        elseif o.type == "Backgammon Piece" then
+            treasury.putObject(o)
+        end
+    end
+    for i,o in ipairs(getAllObjects()) do
+        if o.type == "Card" and o.guid ~= actionsCardGUID then
+            if o.getScale()[1] > 1 then
+                o.setRotation({0, 180, 180})
+                o.setPosition({0, 1.5, 0})
+            else
+                o.destruct()
+            end
+        end
+    end
+    for p,c in pairs(cards) do
+        cards[p] = 0
+    end
+	for i,p in ipairs(PLAYER_COLORS) do
+		coins[p] = 0
+	end
+    startLuaCoroutine(Global, "wait_a_sec")
+end
+
+function wait_a_sec()
+    wait(10)
+    GATHERING = false
+    return 1
+end
+
+function dealCards(player)
+	reference_color = player.color
+	startLuaCoroutine(Global, "deal_cards_cr")
+end
+
+function deal_cards_cr()
+	-- create new list of "next player" based on who is seated
+	newPlayerList = newNextPlayerList()
+	for i,o in pairs(deckZone.getObjects()) do
+		if o.type == "Deck" then
+			deck = o
+		end
+	end
+	deck.randomize()
+	wait(10)
+	p = reference_color -- p starts as the color that pressed the button
+	while #deck.getObjects() > (15 - (2 * #getSeatedPlayers())) do -- 15 is size of deck, 2 is num of cards to deal
+		wait(2)
+		p = newPlayerList[p] -- iterate to next player
+		deck.deal(1, p)
+		n = firstCoin[p].getPosition()
+		treasury.takeObject({
+			position = LocalPos(firstCoin[p], {2*coins[p], 0}, 2),
+			rotation = firstCoin[p].getRotation() -- not really necessary since they're circles but whatever
+		})
+		coins[p] = coins[p] + 1
+	end
+	return 1
+end
+
+function nothin()
+	return 1
+end

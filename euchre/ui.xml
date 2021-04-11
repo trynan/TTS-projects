@@ -1,0 +1,113 @@
+<Button
+    id="gather"
+    onClick="gather"
+    width="150"
+    height="50"
+    fontsize="24"
+	offsetXY="775 -180"
+    >
+Reset Deck</Button>
+
+
+<Button
+    id="deal"
+    onClick="dealCards"
+    width="150"
+    height="50"
+    fontsize="24"
+	offsetXY="775 60"
+    >
+Deal</Button>
+
+
+<Button
+    id="trick"
+    onClick="takeTrick"
+    width="150"
+    height="50"
+    fontsize="24"
+	offsetXY="775 0"
+    >
+Take Trick</Button>
+
+
+
+<TableLayout
+    id="suitTable"
+    offsetXY="750 325"
+    height="200"
+    width="210"
+    rowBackgroundColor="White"
+    visibility="Black">
+    <!-- Row 1 -->
+    <Row id="row1" active="false" preferredHeight="50">
+        <Cell columnspan="2"><Button
+            id="cancel"
+        	fontsize="24"
+            color="#FF8080"
+        	onClick="cancelTrump"
+        >Reset Trump</Button></Cell>
+    </Row>
+
+    <!-- Row 2 -->
+    <Row id="row2" active="false" preferredHeight="100">
+        <Cell><Button
+        	id="hearts"
+        	fontsize="20"
+        	onClick="chooseTrump(hearts)"
+            image="hearts"
+        ></Button></Cell>
+        <Cell><Button
+        	id="diamonds"
+        	fontsize="20"
+        	onClick="chooseTrump(diamonds)"
+            image="diamonds"
+        ></Button></Cell>
+    </Row>
+
+    <!-- Row 3 -->
+    <Row id="row3" active="false" preferredHeight="100">
+        <Cell><Button
+        	id="spades"
+        	fontsize="20"
+        	onClick="chooseTrump(spades)"
+            image="spades"
+        ></Button></Cell>
+        <Cell><Button
+        	id="clubs"
+        	fontsize="20"
+        	onClick="chooseTrump(clubs)"
+            image="clubs"
+        ></Button></Cell>
+    </Row>
+
+    <!-- Row 4 -->
+    <Row id="row4" preferredHeight="50" active="false">
+        <Cell columnspan="2"><Button
+            id="nosuit"
+            fontsize="20"
+            onClick="chooseTrump(nosuit)"
+            color="#00FFFF"
+        >No Suit</Button></Cell>
+    </Row>
+
+    <!-- Row 5 -->
+    <Row id="row5" preferredHeight="50">
+        <Cell columnspan="2"><Button
+            id="pickup"
+            fontsize="20"
+            onClick="pickup"
+            color="#44FF44"
+        >Pick It Up</Button></Cell>
+    </Row>
+
+    <!-- Row 6 -->
+    <Row id="row6" preferredHeight="50">
+        <Cell columnspan="2"><Button
+            id="pass"
+            fontsize="20"
+            onClick="pass"
+            color="#FF4040"
+        >Pass</Button></Cell>
+    </Row>
+</TableLayout>

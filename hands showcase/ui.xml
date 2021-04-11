@@ -1,0 +1,30 @@
+<Button
+    id="gather"
+    onClick="gather"
+    width="150"
+    height="50"
+    fontsize="24"
+	offsetXY="750 -100"
+    >
+Reset Deck</Button>
+
+
+<Button
+    id="deal"
+    onClick="dealCards"
+    width="150"
+    height="50"
+    fontsize="24"
+	offsetXY="750 0"
+    >
+Deal</Button>
+
+<Button
+    id="spec"
+    onClick="spectate"
+    width="150"
+    height="50"
+    fontsize="24"
+    offsetXY="750 250"
+    >
+Spectate</Button>

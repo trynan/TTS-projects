@@ -10,10 +10,11 @@
     -- cards in front of players (indexes are player colors)
 
 function spawn_card(p, c) -- p is player, c is card
+    local rot = invisCardPlace[p].getRotation()
     local c = spawnObjectData({
         data     = c.getData(),
         position = LocalPos(invisCardPlace[p], {2 * cards[p], 0}, 0.97),
-        rotation = invisCardPlace[p].getRotation(),
+        rotation = {rot[1], rot[2] + 180, rot[3]},
         scale    = {0.9, 1, 0.9}
     })
     c.setInvisibleTo(PLAYER_COLORS)
