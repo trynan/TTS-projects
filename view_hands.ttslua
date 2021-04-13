@@ -61,7 +61,7 @@ function onObjectLeaveZone(zone, obj)
 end
 
 function reset_invis_cards()
-    wait(10)
+    wait(math.random(5,40))
     local p = reference_player
     cards[p] = 0
     -- delete current cards

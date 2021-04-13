@@ -1,0 +1,110 @@
+-- script by trynan
+require("local_pos")
+require("utils")
+
+local mainZoneGUID = "56fe5f"
+local chipGUID = "cb2ffe"
+local deckZoneGUID = "c0e5d4"
+local midButtonGUID = "1752af"
+
+local trickPlaceGUIDS = {"d18d49", "3bf4ed", "6c7c54", "416d95", "437ede", "ab0868", "9ca292", "d321d1"}
+local trickZoneGUIDS = {"1bda33", "93ff2c", "cb27c8", "f1d0bd", "3930df", "f8fe78", "ac7876", "553d76"}
+local chipZoneGUIDS = {"45f1cc", "e210e6", "a51b0d", "a1e369", "17c528", "3ff762", "b377f4", "b258af"}
+
+PLAYER_COLORS = {"White", "Red", "Orange", "Yellow", "Green", "Teal", "Blue", "Pink"}
+
+ROTATIONS = {White=0, Red=0, Orange=90, Yellow=90, Green=180, Teal=180, Blue=270, Pink=270}
+
+function onLoad()
+    trickPlaces = {}
+    trickZones = {}
+    chipZones = {}
+    local trickSep = 1.853
+    rightDir = {{trickSep, 0, 0}, {trickSep, 0, 0}, {0, 0, -trickSep}, {0, 0, -trickSep}, {-trickSep, 0, 0}, {-trickSep, 0, 0}, {0, 0, trickSep}, {0, 0, trickSep}}
+    for i,player in ipairs(PLAYER_COLORS) do
+        trickPlaces[player] = getObjectFromGUID(trickPlaceGUIDS[i])
+        trickZones[player] = getObjectFromGUID(trickZoneGUIDS[i])
+        chipZones[player] = getObjectFromGUID(chipZoneGUIDS[i])
+        rightDir[player] = rightDir[i]
+    end
+
+    deckZone = getObjectFromGUID(deckZoneGUID)
+    tableZone = getObjectFromGUID(mainZoneGUID)
+    chip = getObjectFromGUID(chipGUID)
+    midButton = getObjectFromGUID(midButtonGUID)
+
+    chip.setPosition({-3, 1.52, -3})
+    chip.setRotation({0, 0, 0})
+    getDeck(deckZone).randomize()
+end
+
+midval = 1
+function changemid(n)
+    midval = midval + n
+end
+
+function takeTrick(player)
+    pc = player.color
+    zoneObj = tableZone.getObjects()
+    local numOfTricks = 0
+    for _,o in ipairs(trickZones[pc].getObjects()) do
+        if o.type == "Card" or o.type == "Deck" then
+            numOfTricks = numOfTricks + 1
+        end
+    end
+    for _,o in ipairs(tableZone.getObjects()) do
+        if o.type == "Card" or o.type == "Deck" then
+            o.setRotationSmooth({0,ROTATIONS[pc],180})
+            tpp = trickPlaces[pc].getPosition()
+            newPos1 = tpp[1] + (numOfTricks * rightDir[pc][1])
+            newPos2 = tpp[2] + (numOfTricks * rightDir[pc][2])
+            newPos3 = tpp[3] + (numOfTricks * rightDir[pc][3])
+            newPos = {newPos1, newPos2, newPos3}
+            o.setPositionSmooth(newPos, false, false)
+        end
+    end
+end
+
+function gather()
+    UI.setAttribute("trick", "interactable", "false")
+    UI.setAttribute("deal", "interactable", "true")
+    for _,o in ipairs(getAllObjects()) do
+        if o.type == "Card" or o.type == "Deck" then
+            o.setRotation({0, 180, 180})
+            o.setPosition({3, 1.7, 0.00})
+        end
+    end
+end
+
+function dealCards(player)
+    UI.setAttribute("trick", "interactable", "true")
+    UI.setAttribute("deal", "interactable", "false")
+    c = player.color
+    chip.setPositionSmooth({chipZones[c].getPosition()[1], 1.47, chipZones[c].getPosition()[3]}, false, false)
+    chip.setRotation({0, ROTATIONS[c], 0})
+    startLuaCoroutine(Global, "deal_cards_cr")
+end
+
+function deal_cards_cr()
+    -- create new list of "next player" based on who is seated
+    nextPlayerList = newNextPlayers()
+    local deck = getDeck(deckZone)
+    deck.randomize()
+    wait(10)
+    p = c -- p starts as the color that pressed the button
+    while #deck.getObjects() > (52 - (midval * #getSeatedPlayers())) do
+        wait(2)
+        p = nextPlayerList[p] -- make p the next player to get the card after each iteration
+        deck.deal(1, p)
+    end
+    deck.takeObject({
+        position = {deck.getPosition()[1], 3.5, deck.getPosition()[3]},
+        flip = true,
+        smooth = true
+    })
+    return 1
+end
+
+function nothin()
+    return 1
+end
