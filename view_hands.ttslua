@@ -8,133 +8,157 @@
 -- GATHERING - bool of whether deck is currently being reset
 -- invisCardCount - list of scripting zones that contain all invisible
     -- cards in front of players (indexes are player colors)
-require("local_pos")
 
-function spawn_card(p, c) -- p is player, c is card
-    local rot = invisCardPlace[p].getRotation()
-    local c = spawnObjectData({
-        data     = c.getData(),
-        position = LocalPos(invisCardPlace[p], {2 * cards[p], 0}, 0.97),
-        rotation = {rot[1], rot[2] + 180, rot[3]},
-        scale    = {0.9, 1, 0.9}
-    })
-    c.setInvisibleTo(PLAYER_COLORS)
-    c.getComponent("AudioSource").set("mute", true) -- mute the card's sounds
-    cards[p] = cards[p] + 1
-end
-
-function onObjectEnterZone(zone, obj)
-    if obj.type == "Card" or obj.type == "Deck" then
-        for p,z in pairs(handZone) do
-            if zone == z then -- card entered hand zone
-                if cards[p] < 0 then
-                    cards[p] = 0
-                end
-                spawn_card(p, obj)
-                return
-            end
-        end
+    function spawn_card(p, c) -- p is player, c is card
+        local rot = invisCardPlace[p].getRotation()
+        local pos = invisCardPlace[p].getPosition()
+        local right = invisCardPlace[p].getTransformRight()
+        rot = {rot.x, rot.y + 180, rot.z}
+        local c = spawnObjectData({
+            data     = c.getData(),
+            position = { -- move in the direction of right by 2 times # of cards
+                pos.x + (right.x * 2 * cards[p]),
+                0.97,
+                pos.z + (right.z * 2 * cards[p])
+            },
+            rotation = rot,
+            scale    = {0.9, 1, 0.9}
+        })
+        c.setInvisibleTo(PLAYER_COLORS)
+        c.getComponent("AudioSource").set("mute", true) -- mute the card's sounds
+        c.interactable = false
+        c.locked = true
+        cards[p] = cards[p] + 1
     end
-end
 
-function onObjectLeaveZone(zone, obj)
-    if not GATHERING and (obj.type == "Card" or obj.type == "Deck") then -- when resetting decks, we want to ignore when cards leave scripting zones
-        for p,z in pairs(handZone) do
-            if zone == z then -- when a card leaves a hand zone:
-                local t = obj.getTags()[1]
-                for _,card in ipairs(invisCardCount[p].getObjects()) do
-                    -- find the invisible card in front of the player with the same
-                    -- tag as the card that left their hand zone.
-                    if card.getTags()[1] == t then
-                        card.destruct()
-                        cards[p] = cards[p] - 1
-                        break
+    function onObjectEnterZone(zone, obj)
+        if obj.type == "Card" or obj.type == "Deck" then
+            for p,z in pairs(handZone) do
+                if zone == z then -- card entered hand zone
+                    if cards[p] < 0 then
+                        cards[p] = 0
                     end
+                    spawn_card(p, obj)
+                    return
                 end
-                reference_player = p
-                -- coroutine to shift cards to the left
-                startLuaCoroutine(Global, "reset_invis_cards")
-                -- startLuaCoroutine(Global, "reset_all_invis_cards")
             end
         end
     end
-end
 
-function reset_invis_cards()
-    wait(math.random(5,40))
-    local p = reference_player
-    cards[p] = 0
-    -- delete current cards
-    for _,card in ipairs(invisCardCount[p].getObjects()) do
-        if card.getScale()[1] < 1 then
-            card.destruct()
-        end
-    end
-    for _,card in ipairs(handZone[p].getObjects()) do
-        spawn_card(p, card)
-    end
-    return 1
-end
-
-function onPlayerAction(player, action, targets)
-    local p = player.color
-    if action == Player.Action.PickUp then
-        if #targets == 1 and targets[1].type == "Card" then
-            -- player is picking up a single card
-            local c = targets[1]
-            local found = false
-            for p_hand,h in pairs(handZone) do
-                for n,i in ipairs(h.getObjects()) do
-                    if c == i then
-                        reference_player = p_hand
-                        found = true
-                        break
+    function onObjectLeaveZone(zone, obj)
+        if not GATHERING and (obj.type == "Card" or obj.type == "Deck") then -- when resetting decks, we want to ignore when cards leave scripting zones
+            for p,z in pairs(handZone) do
+                if zone == z then -- when a card leaves a hand zone:
+                    local t = obj.getTags()[1]
+                    for _,card in ipairs(invisCardCount[p].getObjects()) do
+                        -- find the invisible card in front of the player with the same
+                        -- tag as the card that left their hand zone.
+                        if card.getTags()[1] == t then
+                            card.destruct()
+                            cards[p] = cards[p] - 1
+                            break
+                        end
                     end
+                    reference_player = p
+                    -- coroutine to shift cards to the left
+                    startLuaCoroutine(Global, "reset_invis_cards")
                 end
-                if found then break end
             end
-            if found then
-                -- once they let go of the card, reset the invisible cards
-                Wait.condition(
-                    function()
+        end
+    end
+
+    function reset_invis_cards()
+        wait(math.random(0, 10))
+        wait(math.random(0, 10))
+        local p = reference_player
+        cards[p] = 0
+        -- delete current cards
+        for _,card in ipairs(invisCardCount[p].getObjects()) do
+            if card.getScale()[1] < 1 then
+                card.destruct()
+            end
+        end
+        for _,card in ipairs(handZone[p].getObjects()) do
+            spawn_card(p, card)
+        end
+        return 1
+    end
+
+    function onObjectDrop(color, obj)
+        -- if obj.type == "Card" and #Player[color].getSelectedObjects() < 1 then
+        if obj.type == "Card" then
+            for p,z in pairs(handZone) do
+                for i, oz in ipairs(obj.getZones()) do
+                    if z == oz then -- card was dropped within a player's hand
+                        -- print(obj.getTags()[1], ' in ', p, "'s hand zone")
+                        reference_player = p
                         startLuaCoroutine(Global, "reset_invis_cards")
-                    end,
-                    function()
-                        return (c.held_by_color == nil)
                     end
-                    -- 30,
-                    -- function()
-                    --     print('RESET HAND FUNCTION FAILED')
-                    -- end
-                )
+                end
             end
         end
     end
-    -- code which denies players from taking cards from other players' hands
-    -- (assuming a single target)
-    -- if action == Player.Action.PickUp then
-    --     if targets[1].type == "Card" then -- player is picking up a card
-    --         local c = targets[1]
-    --         local isInHand = false
-    --         for _,i in ipairs(handZone[player.color].getObjects()) do
-    --             if i.getTags()[1] == c.getTags()[1] then
-    --                 isInHand = true
-    --             end
-    --         end
-    --         if not isInHand then
-    --             local found = false
-    --             for p,h in pairs(handZone) do
-    --                 for _,i in ipairs(h.getObjects()) do
-    --                     if c == i then
-    --                         found = true
-    --                     end
-    --                 end
-    --             end
-    --             return not found
-    --         end
-    --     end
-    -- end
-end
+
+
+-- function onPlayerAction(player, action, targets)
+--     local p = player.color
+--     if action == Player.Action.PickUp then
+--         if #targets == 1 and targets[1].type == "Card" then
+--             -- player is picking up a single card
+--             local c = targets[1]
+--             local found = false
+--             for p_hand,h in pairs(handZone) do
+--                 for n,i in ipairs(h.getObjects()) do
+--                     if c == i then
+--                         reference_player = p_hand
+--                         found = true
+--                         break
+--                     end
+--                 end
+--                 if found then break end
+--             end
+--             if found then
+--                 -- once they let go of the card, reset the invisible cards
+--                 Wait.condition(
+--                     function()
+--                         startLuaCoroutine(Global, "reset_invis_cards")
+--                     end,
+--                     function()
+--                         return (c.held_by_color == nil)
+--                     end
+--                     -- 30,
+--                     -- function()
+--                     --     print('RESET HAND FUNCTION FAILED')
+--                     -- end
+--                 )
+--             end
+--         end
+--     end
+--     -- code which denies players from taking cards from other players' hands
+--     -- (assuming a single target)
+--     -- if action == Player.Action.PickUp then
+--     --     if targets[1].type == "Card" then -- player is picking up a card
+--     --         local c = targets[1]
+--     --         local isInHand = false
+--     --         for _,i in ipairs(handZone[player.color].getObjects()) do
+--     --             if i.getTags()[1] == c.getTags()[1] then
+--     --                 isInHand = true
+--     --             end
+--     --         end
+--     --         if not isInHand then
+--     --             local found = false
+--     --             for p,h in pairs(handZone) do
+--     --                 for _,i in ipairs(h.getObjects()) do
+--     --                     if c == i then
+--     --                         found = true
+--     --                     end
+--     --                 end
+--     --             end
+--     --             return not found
+--     --         end
+--     --     end
+--     -- end
+-- end
 
 -- function reset_all_invis_cards()
 --     wait(10)

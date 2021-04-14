@@ -107,14 +107,19 @@ function deal_cards_cr()
     end
     deck.randomize()
     wait(10)
-    p = reference_color -- p starts as the color that pressed the button
+    local p = reference_color -- p starts as the color that pressed the button
     while #deck.getObjects() > (15 - (2 * #getSeatedPlayers())) do -- 15 is size of deck, 2 is num of cards to deal
         wait(2)
         p = newPlayerList[p] -- iterate to next player
         deck.deal(1, p)
-        n = firstCoin[p].getPosition()
+        local pos = firstCoin[p].getPosition()
+        local right = firstCoin[p].getTransformRight()
         treasury.takeObject({
-            position = LocalPos(firstCoin[p], {2*coins[p], 0}, 2),
+            position = {
+                pos.x + (right.x * 2 * coins[p]),
+                2,
+                pos.z + (right.z * 2 * coins[p]),
+            },
             rotation = firstCoin[p].getRotation() -- not really necessary since they're circles but whatever
         })
         coins[p] = coins[p] + 1
