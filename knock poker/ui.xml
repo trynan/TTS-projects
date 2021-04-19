@@ -1,35 +1,40 @@
-<Button
-    id="gather"
-    onClick="gather"
-    width="150"
-    height="50"
-    fontsize="24"
-    offsetXY="775 -180"
-    >
-Reset Deck</Button>
-
-
-<Button
-    id="deal"
-    onClick="dealCards"
-    width="150"
-    height="50"
-    fontsize="24"
-    offsetXY="775 60"
-    >
-Deal</Button>
-
-
-<Button
-    id="knock"
-    onClick="knock"
-    width="150"
-    height="50"
-    fontsize="24"
-    offsetXY="775 0"
-    interactable="false"
-    >
-Knock</Button>
+<TableLayout
+    id="playTable"
+    offsetXY="750 60"
+    height="150"
+    width="175"
+    rowBackgroundColor="White"
+    allowDragging="true"
+    returnToOriginalPositionWhenReleased="false">
+    <Row id="row1" preferredHeight="80">
+        <Cell>
+            <Button
+                id="deal"
+                onClick="dealCards"
+                fontsize="24"
+            >Deal</Button>
+        </Cell>
+        <Cell>
+            <Button
+                id="gather"
+                onClick="gather"
+                fontsize="24"
+                color="#FF8080"
+            >Reset Deck</Button>
+        </Cell>
+    </Row>
+    <Row>
+        <Cell columnspan="2">
+            <Button
+                id="knock"
+                onClick="knock"
+                fontsize="24"
+                interactable="false"
+                color="#44FF44"
+            >Knock</Button>
+        </Cell>
+    </Row>
+</TableLayout>
 
 <Button
     id="spec"
@@ -37,6 +42,14 @@ Knock</Button>
     width="150"
     height="50"
     fontsize="24"
-    offsetXY="775 250"
-    >
-Spectate</Button>
+    offsetXY="750 250"
+>Spectate</Button>
+
+<Button
+    id="clr"
+    onClick="clear_buttons"
+    width="100"
+    height="50"
+    fontsize="18"
+    offsetXY="750 -400"
+>Clear Counters</Button>

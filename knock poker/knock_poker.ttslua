@@ -1,29 +1,42 @@
 -- script by trynan
-require("view_hands")
-require("utils")
+#include view_hands
+#include create_counter
+#include !/utils
+-- #include !/console++
 
-local chipGUID = "e2245e"
+-- MAIN SCRIPT STARTS HERE
+--------------------------------------------------------------------------------
+-- Setup
+
+local chipGUID      = "e2245e"
 local knockCubeGUID = "904cc4"
-local deckZoneGUID = "e5f68a"
+local deckZoneGUID  = "e5f68a"
+local discZoneGUID  = "5c4e38"
 
-PLAYER_COLORS = {"White", "Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Pink"}
-local squareZoneGUIDS = {"9ffd4a", "6302fa", "fd2c93", "7ecc9f", "9a1827", "64d177", "7a4a8f", "dfea21"}
-local chipZoneGUIDS = {"d08856", "39957c", "5ec11c", "9f0e98", "b57402", "a65637", "428e26", "081452"}
-local invisCardPlaceZoneGUIDS = {"2b30da", "fc5b9c", "1fdde1", "1ae0ed", "d3a520", "7863b8", "2693b1", "83690e"}
-local invisCardCountZoneGUIDS = {"1357fb", "fa1b80", "d4eebb", "8f6461", "bbb148", "3edb85", "33938a", "5bc3bf"}
-local handZoneGUIDS = {"5f2903", "901020", "fb2a55", "8d5a9d", "00adfa", "892348", "2ab270", "6a9881"}
+PLAYER_COLORS                 = { "White" , "Red"   , "Orange", "Yellow", "Green" , "Blue"  , "Purple", "Pink"   }
+local squareZoneGUIDS         = { "9ffd4a", "6302fa", "fd2c93", "7ecc9f", "9a1827", "64d177", "7a4a8f", "dfea21" }
+local chipZoneGUIDS           = { "d08856", "39957c", "5ec11c", "9f0e98", "b57402", "a65637", "428e26", "081452" }
+local invisCardPlaceZoneGUIDS = { "2b30da", "fc5b9c", "1fdde1", "1ae0ed", "d3a520", "7863b8", "2693b1", "83690e" }
+local invisCardCountZoneGUIDS = { "1357fb", "fa1b80", "d4eebb", "8f6461", "bbb148", "3edb85", "33938a", "5bc3bf" }
+local handZoneGUIDS           = { "5f2903", "901020", "fb2a55", "8d5a9d", "00adfa", "892348", "2ab270", "6a9881" }
+local counterGUIDS            = { "0c9916", "ec61de", "6b2548", "3e9d53", "713b0b", "9a88e1", "cec2fe", "7fdef8" }
 
-function onLoad()
-    DEALING = false
+-- console.autoexec = [[
+--     cmd
+-- ]]
+
+function onLoad(counter_data)
+    local counter_values = JSON.decode(counter_data)
+    Turns.enable = false
     GATHERING = false
     ROTATIONS = {}
     squareZones = {}
     chipZones = {}
     invisCardPlace = {}
     invisCardCount = {}
-    cards = {}
     handZone = {}
-    NEXT = {}
+    counter = {}
+    cards = {}
     for i,player in ipairs(PLAYER_COLORS) do
         ROTATIONS[player] = 45 * (i-1)
         squareZones[player] = getObjectFromGUID(squareZoneGUIDS[i])
@@ -31,19 +44,51 @@ function onLoad()
         invisCardPlace[player] = getObjectFromGUID(invisCardPlaceZoneGUIDS[i])
         invisCardCount[player] = getObjectFromGUID(invisCardCountZoneGUIDS[i])
         handZone[player] = getObjectFromGUID(handZoneGUIDS[i])
+        counter[player] = getObjectFromGUID(counterGUIDS[i])
         cards[player] = 0
-        NEXT[player] = PLAYER_COLORS[i + 1]
+        create_counter(counter[player])
+        if counter_values ~= '' and counter_values ~= nil then
+            counter[player].editButton({
+                index = 2,
+                label = counter_values[i],
+                tooltip = counter_values[i]
+            })
+        end
     end
-    NEXT["Pink"] = "White"
     deckZone = getObjectFromGUID(deckZoneGUID)
+    discZone = getObjectFromGUID(discZoneGUID)
     chip = getObjectFromGUID(chipGUID)
     knockCube = getObjectFromGUID(knockCubeGUID)
 
     knockCube.setPosition({-4.14, 2.05, 0.00})
     chip.setPosition({0.00, 1.25, -4.52})
     chip.setRotation({0, 0, 0})
+    chip.createButton({
+        click_function = "nothin",
+        label = "Current\nDealer",
+        position = {0, 0.3, 0},
+        rotation = {0, 180, 0},
+        width = 500,
+        height = 500,
+        font_size = 125,
+        tooltip = "Current\nDealer",
+        color = {0, 0, 0},
+        font_color = {1, 1, 1}
+    })
     getDeck(deckZone).randomize()
+    -- console.load()
 end
+
+function onSave()
+    local data = {}
+    for i,c in pairs(counter) do
+        table.insert(data, c.getButtons()[3].label)
+    end
+    return JSON.encode(data)
+end
+
+--------------------------------------------------------------------------------
+-- Main Gameplay Functions
 
 function knock(player)
     knockCube.setPositionSmooth({squareZones[player.color].getPosition()[1], 6, squareZones[player.color].getPosition()[3]}, false, false)
@@ -53,23 +98,17 @@ function knock(player)
 end
 
 function gather()
+    Turns.enable = false
     GATHERING = true
     UI.setAttribute("knock", "interactable", "false")
     UI.setAttribute("deal", "interactable", "true")
     knockCube.setPosition({-4.14, 2.05, 0.00})
     knockCube.setRotation({0, 0, 0})
     for i,o in ipairs(getAllObjects()) do
-        if o.type == "Deck" then
-            if o.getScale()[1] > 1 then
-                o.setRotation({0, 180, 180})
-                o.setPosition({0.00, 1.67, 0.00})
-            else
-                o.destruct()
-            end
-        end
-    end
-    for i,o in ipairs(getAllObjects()) do
-        if o.type == "Card" then
+        if o.type == "Deck" or o.type == "Card" then
+            -- the scale stuff here is only for the invisible cards that spectators can see.
+            -- those cards are smaller than the regular cards, they should just
+            -- be destroyed on deck reset
             if o.getScale()[1] > 1 then
                 o.setRotation({0, 180, 180})
                 o.setPosition({0.00, 1.67, 0.00})
@@ -81,33 +120,27 @@ function gather()
     for p,c in pairs(cards) do
         cards[p] = 0
     end
-    startLuaCoroutine(Global, "wait_a_sec")
-end
-
-function wait_a_sec()
-    wait(10)
-    GATHERING = false
-    return 1
+    Wait.frames(function() GATHERING = false end, 10)
 end
 
 function dealCards(player)
-    c = player.color
+    Turns.turn_color = newNextPlayers()[player.color] -- enables turns
+    ref_c = player.color
     UI.setAttribute("knock", "interactable", "true")
     UI.setAttribute("deal", "interactable", "false")
-    chip.setPositionSmooth({chipZones[c].getPosition()[1], 0.96, chipZones[c].getPosition()[3]}, false, false)
-    chip.setRotation({0, ROTATIONS[c], 0})
+    chip.setPositionSmooth({chipZones[ref_c].getPosition()[1], 0.96, chipZones[ref_c].getPosition()[3]}, false, false)
+    chip.setRotation({0, ROTATIONS[ref_c], 0})
     startLuaCoroutine(Global, "deal_cards_cr")
 end
 
 function deal_cards_cr()
-    DEALING = true
     -- create new list of "next player" based on who is seated
-    newNextPlayerList = newNextPlayers()
+    local newNextPlayerList = newNextPlayers()
     for _,o in ipairs(deckZone.getObjects()) do
         if o.type == "Deck" and o.getScale()[1] > 1 then
             o.randomize()
             wait(10)
-            p = c -- p starts as the color that pressed the button
+            p = ref_c -- p starts as the color that pressed the button
             while #o.getObjects() > (52 - (5 * #getSeatedPlayers())) do
                 wait(2)
                 p = newNextPlayerList[p] -- make p the next player to get the card after each iteration
@@ -120,20 +153,15 @@ function deal_cards_cr()
             })
         end
     end
-    DEALING = false
     return 1
 end
+--------------------------------------------------------------------------------
+-- Misc. Button Functions
 
-function spectate(player)
-    if player.color != 'Grey' then
-        local msg = Player[player.color].steam_name .. " is now spectating."
-        Player[player.color].changeColor('Grey')
-        broadcastToAll(msg, 'Grey')
-    else
-        broadcastToColor('You are already spectating!', player.color, player.color)
+function clear_buttons()
+    for p,b in pairs(counter) do
+        b.editButton({index = 2, label = 0, tooltip = 0})
     end
 end
 
-function nothin()
-    return 1
-end
+function nothin() end

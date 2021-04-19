@@ -93,6 +93,14 @@ function onObjectDrop(color, obj)
                     -- print(obj.getTags()[1], ' in ', p, "'s hand zone")
                     reference_player = p
                     startLuaCoroutine(Global, "reset_invis_cards")
+                    return
+                end
+            end
+        end
+        for i,z in ipairs(obj.getZones()) do
+            if z == discZone then
+                if color == Turns.turn_color then
+                    Turns.turn_color = Turns.getNextTurnColor()
                 end
             end
         end
