@@ -91,9 +91,10 @@ end
 -- Main Gameplay Functions
 
 function knock(player)
+    Turns.turn_color = Turns.getNextTurnColor()
     knockCube.setPositionSmooth({squareZones[player.color].getPosition()[1], 6, squareZones[player.color].getPosition()[3]}, false, false)
     knockCube.setRotation({0, ROTATIONS[player.color], 0})
-    msg = Player[player.color].steam_name .. " has knocked!"
+    msg = (Player[player.color].steam_name or player.color) .. " has knocked!"
     broadcastToAll(msg, player.color)
 end
 
