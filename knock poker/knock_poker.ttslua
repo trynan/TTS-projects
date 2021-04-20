@@ -29,6 +29,8 @@ function onLoad(counter_data)
     local counter_values = JSON.decode(counter_data)
     Turns.enable = false
     GATHERING = false
+    KNOCKED = false
+    TURN = 1
     ROTATIONS = {}
     squareZones = {}
     chipZones = {}
@@ -91,6 +93,12 @@ end
 -- Main Gameplay Functions
 
 function knock(player)
+    if KNOCKED then
+        broadcastToColor("Someone already knocked!", player.color)
+        overrideKnockPrompt(player)
+        return
+    end
+    KNOCKED = true
     Turns.turn_color = Turns.getNextTurnColor()
     knockCube.setPositionSmooth({squareZones[player.color].getPosition()[1], 6, squareZones[player.color].getPosition()[3]}, false, false)
     knockCube.setRotation({0, ROTATIONS[player.color], 0})
@@ -98,9 +106,27 @@ function knock(player)
     broadcastToAll(msg, player.color)
 end
 
+function overrideKnockPrompt(player)
+    UI.setAttributes("override", {
+        active="true",
+        visibility=player.color
+    })
+end
+
+function cancelOverride()
+    UI.setAttribute("override", "active", "false")
+end
+
+function overrideKnock(player)
+    UI.setAttribute("override", "active", "false")
+    KNOCKED = false
+    knock(player)
+end
+
 function gather()
     Turns.enable = false
     GATHERING = true
+    KNOCKED = false
     UI.setAttribute("knock", "interactable", "false")
     UI.setAttribute("deal", "interactable", "true")
     knockCube.setPosition({-4.14, 2.05, 0.00})

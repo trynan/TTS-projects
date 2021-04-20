@@ -53,3 +53,33 @@
     fontsize="18"
     offsetXY="750 -400"
 >Clear Counters</Button>
+
+<TableLayout
+    id="override"
+    offsetXY="0 0"
+    height="150"
+    width="150"
+    rowBackgroundColor="White"
+    allowDragging="true"
+    returnToOriginalPositionWhenReleased="false"
+    active="false">
+    <Row id="row1" preferredHeight="80">
+        <Cell>
+            <Button
+                id="override_button"
+                onClick="overrideKnock"
+                fontsize="24"
+            >Override Knock</Button>
+        </Cell>
+    </Row>
+    <Row>
+        <Cell>
+            <Button
+                id="cancel"
+                onClick="cancelOverride"
+                fontsize="24"
+                color="#FF8080"
+            >Cancel</Button>
+        </Cell>
+    </Row>
+</TableLayout>

@@ -6,6 +6,8 @@
 -- cards - list of num of cards per player (indexes are player colors)
 -- handZone - list of hand zones (indexes are player colors)
 -- GATHERING - bool of whether deck is currently being reset
+-- KNOCKED - bool of whether someone has knocked yet
+-- TURN - int, only incremented after knocking to know when the round is over
 -- invisCardCount - list of scripting zones that contain all invisible
     -- cards in front of players (indexes are player colors)
 
@@ -100,7 +102,14 @@ function onObjectDrop(color, obj)
         for i,z in ipairs(obj.getZones()) do
             if z == discZone then
                 if color == Turns.turn_color then
-                    Turns.turn_color = Turns.getNextTurnColor()
+                    if KNOCKED then TURN = TURN + 1 end
+                    if KNOCKED and TURN == #getSeatedPlayers() then
+                        -- disable turns after one loop around the table
+                        -- after the knock
+                        Turns.enable = false
+                    else
+                        Turns.turn_color = Turns.getNextTurnColor()
+                    end
                 end
             end
         end
