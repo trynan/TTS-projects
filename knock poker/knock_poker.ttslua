@@ -14,18 +14,41 @@ local deckZoneGUID  = "e5f68a"
 local discZoneGUID  = "5c4e38"
 
 PLAYER_COLORS                 = { "White" , "Red"   , "Orange", "Yellow", "Green" , "Blue"  , "Purple", "Pink"   }
-local squareZoneGUIDS         = { "9ffd4a", "6302fa", "fd2c93", "7ecc9f", "9a1827", "64d177", "7a4a8f", "dfea21" }
-local chipZoneGUIDS           = { "d08856", "39957c", "5ec11c", "9f0e98", "b57402", "a65637", "428e26", "081452" }
-local invisCardPlaceZoneGUIDS = { "2b30da", "fc5b9c", "1fdde1", "1ae0ed", "d3a520", "7863b8", "2693b1", "83690e" }
-local invisCardCountZoneGUIDS = { "1357fb", "fa1b80", "d4eebb", "8f6461", "bbb148", "3edb85", "33938a", "5bc3bf" }
 local handZoneGUIDS           = { "5f2903", "901020", "fb2a55", "8d5a9d", "00adfa", "892348", "2ab270", "6a9881" }
-local counterGUIDS            = { "0c9916", "ec61de", "6b2548", "3e9d53", "713b0b", "9a88e1", "cec2fe", "7fdef8" }
 
 -- console.autoexec = [[
 --     cmd
 -- ]]
 
+function getZoneParams(pos, rot, sc)
+    local zoneParams = {
+        type = "ScriptingTrigger",
+        position = pos,
+        rotation = rot,
+        scale = sc
+    }
+    return zoneParams
+end
+
+function vector_move(transform_data, dx, dy, dz)
+    -- given transform data, move position (locally) right by dx, up by dy, forward by dz
+    local pos       = transform_data.position
+    local rightDir  = transform_data.right -- x
+    local upDir     = transform_data.up -- y
+    local forwDir   = transform_data.forward -- z
+    return pos + (dx * rightDir) + (dy * upDir) + (dz * forwDir)
+end
+
 function onLoad(counter_data)
+    -- first remove all scripting zones and counters so the spawned set doesn't stack on top
+    for _,z in ipairs(getAllObjects()) do
+        if z.type == "Scripting" and z.guid ~= deckZoneGUID and z.guid ~= discZoneGUID then
+            z.destruct()
+        elseif z.type == "Block" and z.getScale()[1] < 1.5 then
+            z.destruct()
+        end
+    end
+    -- set up global variables
     local counter_values = JSON.decode(counter_data)
     Turns.enable = false
     GATHERING = false
@@ -39,15 +62,22 @@ function onLoad(counter_data)
     handZone = {}
     counter = {}
     cards = {}
+    -- initialize all of these
     for i,player in ipairs(PLAYER_COLORS) do
-        ROTATIONS[player] = 45 * (i-1)
-        squareZones[player] = getObjectFromGUID(squareZoneGUIDS[i])
-        chipZones[player] = getObjectFromGUID(chipZoneGUIDS[i])
-        invisCardPlace[player] = getObjectFromGUID(invisCardPlaceZoneGUIDS[i])
-        invisCardCount[player] = getObjectFromGUID(invisCardCountZoneGUIDS[i])
+        ROTATIONS[player] = 45 * (i - 1)
         handZone[player] = getObjectFromGUID(handZoneGUIDS[i])
-        counter[player] = getObjectFromGUID(counterGUIDS[i])
+        local handT = Player[player].getHandTransform()
+        local squarePos     = vector_move(handT, 4, 0, 9)
+        local chipPos       = vector_move(handT, -4, 0, 4)
+        local invisPlacePos = vector_move(handT, -4.5, 0, 6.5)
+        local invisCountPos = vector_move(handT, 0, -2.24, 6.5)
+        local counterPos    = vector_move(handT, 0, -2.53, 4)
+        squareZones[player]     = spawnObject(getZoneParams(squarePos, handT.rotation, {1, 5.1, 1}))
+        chipZones[player]       = spawnObject(getZoneParams(chipPos, handT.rotation, {1, 5.1, 1}))
+        invisCardPlace[player]  = spawnObject(getZoneParams(invisPlacePos, handT.rotation, {1, 5.1, 1}))
+        invisCardCount[player]  = spawnObject(getZoneParams(invisCountPos, handT.rotation, {10, 1, 1}))
         cards[player] = 0
+        counter[player] = spawnCounter(player, handT, counterPos)
         create_counter(counter[player])
         if counter_values ~= '' and counter_values ~= nil then
             counter[player].editButton({
@@ -57,11 +87,11 @@ function onLoad(counter_data)
             })
         end
     end
+
     deckZone = getObjectFromGUID(deckZoneGUID)
     discZone = getObjectFromGUID(discZoneGUID)
     chip = getObjectFromGUID(chipGUID)
     knockCube = getObjectFromGUID(knockCubeGUID)
-
     knockCube.setPosition({-4.14, 2.05, 0.00})
     chip.setPosition({0.00, 1.25, -4.52})
     chip.setRotation({0, 0, 0})
@@ -92,41 +122,11 @@ end
 --------------------------------------------------------------------------------
 -- Main Gameplay Functions
 
-function knock(player)
-    if KNOCKED then
-        broadcastToColor("Someone already knocked!", player.color)
-        overrideKnockPrompt(player)
-        return
-    end
-    KNOCKED = true
-    Turns.turn_color = Turns.getNextTurnColor()
-    knockCube.setPositionSmooth({squareZones[player.color].getPosition()[1], 6, squareZones[player.color].getPosition()[3]}, false, false)
-    knockCube.setRotation({0, ROTATIONS[player.color], 0})
-    msg = (Player[player.color].steam_name or player.color) .. " has knocked!"
-    broadcastToAll(msg, player.color)
-end
-
-function overrideKnockPrompt(player)
-    UI.setAttributes("override", {
-        active="true",
-        visibility=player.color
-    })
-end
-
-function cancelOverride()
-    UI.setAttribute("override", "active", "false")
-end
-
-function overrideKnock(player)
-    UI.setAttribute("override", "active", "false")
-    KNOCKED = false
-    knock(player)
-end
-
 function gather()
     Turns.enable = false
     GATHERING = true
     KNOCKED = false
+    TURN = 0
     UI.setAttribute("knock", "interactable", "false")
     UI.setAttribute("deal", "interactable", "true")
     knockCube.setPosition({-4.14, 2.05, 0.00})
@@ -182,6 +182,20 @@ function deal_cards_cr()
     end
     return 1
 end
+
+function knock(player)
+    if KNOCKED then
+        broadcastToColor("Someone already knocked!", player.color)
+        overrideKnockPrompt(player)
+        return
+    end
+    KNOCKED = true
+    Turns.turn_color = Turns.getNextTurnColor()
+    knockCube.setPositionSmooth({squareZones[player.color].getPosition()[1], 6, squareZones[player.color].getPosition()[3]}, false, false)
+    knockCube.setRotation({0, ROTATIONS[player.color], 0})
+    msg = (Player[player.color].steam_name or player.color) .. " has knocked!"
+    broadcastToAll(msg, player.color)
+end
 --------------------------------------------------------------------------------
 -- Misc. Button Functions
 
@@ -189,6 +203,31 @@ function clear_buttons()
     for p,b in pairs(counter) do
         b.editButton({index = 2, label = 0, tooltip = 0})
     end
+end
+
+function overrideKnockPrompt(player)
+    UI.setAttributes("override", {
+        active="true",
+        visibility=player.color
+    })
+end
+
+function cancelOverride()
+    UI.setAttribute("override", "active", "false")
+end
+
+function overrideKnock(player)
+    UI.setAttribute("override", "active", "false")
+    KNOCKED = false
+    TURN = 0
+    knock(player)
+end
+
+function cancelKnock()
+    KNOCKED = false
+    TURN = 0
+    knockCube.setPositionSmooth({-4.14, 2.05, 0.00}, false, false)
+    knockCube.setRotation({0, 0, 0})
 end
 
 function nothin() end

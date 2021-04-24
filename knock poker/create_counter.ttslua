@@ -1,3 +1,15 @@
+function spawnCounter(player, handT, counterPos)
+    local counter = spawnObject({
+        type = "BlockSquare",
+        position = counterPos,
+        rotation = handT.rotation,
+        scale = {1.48, 0.1, 1.48}
+    })
+    counter.setColorTint({0, 0, 0})
+    counter.setLock(true)
+    return counter
+end
+
 function create_counter(obj)
     obj.createButton({ -- plus button
         click_function = "add",

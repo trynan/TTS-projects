@@ -54,6 +54,15 @@
     offsetXY="750 -400"
 >Clear Counters</Button>
 
+<Button
+    id="cncl_knck"
+    onClick="cancelKnock"
+    width="100"
+    height="50"
+    fontsize="18"
+    offsetXY="750 -300"
+>Undo Knock</Button>
+
 <TableLayout
     id="override"
     offsetXY="0 0"
