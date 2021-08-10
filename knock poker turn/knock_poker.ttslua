@@ -1,8 +1,8 @@
 -- script by trynan
 #include view_hands
 #include create_counter
-#include !/utils
--- #include !/console++
+#include utils
+#include !/console++
 
 -- MAIN SCRIPT STARTS HERE
 --------------------------------------------------------------------------------
@@ -12,13 +12,11 @@ local chipGUID      = "e2245e"
 local knockCubeGUID = "904cc4"
 local deckZoneGUID  = "e5f68a"
 local discZoneGUID  = "5c4e38"
-
-PLAYER_COLORS       = { "White" , "Red"   , "Orange", "Yellow", "Green" , "Blue"  , "Purple", "Pink"   }
 local handZoneGUIDS = { "5f2903", "901020", "fb2a55", "8d5a9d", "00adfa", "892348", "2ab270", "6a9881" }
 
--- console.autoexec = [[
---     cmd
--- ]]
+console.autoexec = [[
+    cmd
+]]
 
 function getZoneParams(pos, rot, sc)
     local zoneParams = {
@@ -39,20 +37,6 @@ function vector_move(transform_data, dx, dy, dz)
     return pos + (dx * rightDir) + (dy * upDir) + (dz * forwDir)
 end
 
-function update_turn_order()
-    Turns.type = 2
-    local turn_order = {}
-    for i,j in ipairs(PLAYER_COLORS) do
-        if Player[j].seated then
-            table.insert(turn_order, j)
-        end
-    end
-    Turns.order = turn_order
-    -- for i,j in pairs(Turns.order) do
-    --     print(i,j)
-    -- end
-end
-
 function onLoad(counter_data)
     -- first remove all scripting zones and counters so the spawned set doesn't stack on top
     for _,z in ipairs(getObjects()) do
@@ -60,14 +44,18 @@ function onLoad(counter_data)
             z.destruct()
         elseif z.type == "Block" and z.getScale()[1] < 1.5 then
             z.destruct()
+        elseif z.type == "Card" and z.getScale()[1] < 1 then
+            -- also remove any leftover small cards if they happen to exist
+            z.destruct()
         end
     end
     -- set up global variables
-    Turns.enable = false
-    update_turn_order()
+    -- PLAYER_COLORS = Player.getAvailableColors()
+    PLAYER_COLORS = { "White", "Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Pink" }
     GATHERING = false
     KNOCKED = false
     KNOCKER = nil
+    CURRENT_TURN = nil
     ROTATIONS = {}
     squareZones = {}
     chipZones = {}
@@ -93,14 +81,6 @@ function onLoad(counter_data)
         cards[player] = 0
         counter[player] = spawnCounter(player, handT, counterPos)
         create_counter(counter[player])
-        -- local counter_values = JSON.decode(counter_data)
-        -- if counter_values ~= '' and counter_values ~= nil then
-        --     counter[player].editButton({
-        --         index = 2,
-        --         label = counter_values[i],
-        --         tooltip = counter_values[i]
-        --     })
-        -- end
     end
 
     deckZone = getObjectFromGUID(deckZoneGUID)
@@ -108,12 +88,13 @@ function onLoad(counter_data)
     chip = getObjectFromGUID(chipGUID)
     knockCube = getObjectFromGUID(knockCubeGUID)
     knockCube.setPosition({-4.14, 2.05, 0.00})
+    chip.interactable = false
     chip.setPosition({0.00, 1.25, -4.52})
     chip.setRotation({0, 0, 0})
     chip.createButton({
         click_function = "nothin",
         label = "Current\nDealer",
-        position = {0, 0.3, 0},
+        position = {0, 0.23, 0},
         rotation = {0, 180, 0},
         width = 500,
         height = 500,
@@ -123,27 +104,21 @@ function onLoad(counter_data)
         font_color = {1, 1, 1}
     })
     getDeck(deckZone).randomize()
-    -- console.load()
+    console.load()
 end
-
--- function onSave()
---     local data = {}
---     for i,c in pairs(counter) do
---         table.insert(data, c.getButtons()[3].label)
---     end
---     return JSON.encode(data)
--- end
 
 --------------------------------------------------------------------------------
 -- Main Gameplay Functions
 
 function gather()
-    Turns.enable = false
     GATHERING = true
     KNOCKED = false
     KNOCKER = nil
-    UI.setAttribute("knock", "interactable", "false")
-    UI.setAttribute("deal", "interactable", "true")
+    CURRENT_TURN = nil
+    UI.setAttribute("knock_row", "active", "false")
+    UI.setAttribute("gather_cell", "columnspan", "1")
+    UI.setAttribute("deal_cell", "active", "true")
+    UI.hide("turn")
     knockCube.setPosition({-4.14, 2.05, 0.00})
     knockCube.setRotation({0, 0, 0})
     for i,o in ipairs(getObjects()) do
@@ -166,11 +141,12 @@ function gather()
 end
 
 function dealCards(player)
-    update_turn_order()
-    Turns.turn_color = newNextPlayers()[player.color] -- enables turns
+    next_turn(player.color)
     ref_c = player.color
-    UI.setAttribute("knock", "interactable", "true")
-    UI.setAttribute("deal", "interactable", "false")
+    UI.setAttribute("knock_row", "active", "true")
+    UI.setAttribute("deal_cell", "active", "false")
+    UI.setAttribute("gather_cell", "columnspan", "2")
+    UI.setAttribute("turn", "active", "true")
     chip.setPositionSmooth({chipZones[ref_c].getPosition()[1], 0.96, chipZones[ref_c].getPosition()[3]}, false, false)
     chip.setRotation({0, ROTATIONS[ref_c], 0})
     startLuaCoroutine(Global, "deal_cards_cr")
@@ -183,7 +159,7 @@ function deal_cards_cr()
         if o.type == "Deck" and o.getScale()[1] > 1 then
             o.randomize()
             wait(10)
-            p = ref_c -- p starts as the color that pressed the button
+            local p = ref_c -- p starts as the color that pressed the button
             while #o.getObjects() > (52 - (5 * #getSeatedPlayers())) do
                 wait(2)
                 p = newNextPlayerList[p] -- make p the next player to get the card after each iteration
@@ -207,22 +183,25 @@ function knock(player)
     end
     KNOCKED = true
     KNOCKER = player.color
-    Turns.turn_color = Turns.getNextTurnColor()
+    next_turn(player.color)
     knockCube.setPositionSmooth({squareZones[player.color].getPosition()[1], 6, squareZones[player.color].getPosition()[3]}, false, false)
     knockCube.setRotation({0, ROTATIONS[player.color], 0})
-    msg = (Player[player.color].steam_name or player.color) .. " has knocked!"
+    local msg = (Player[player.color].steam_name or player.color) .. " has knocked!"
     broadcastToAll(msg, player.color)
 end
 
-function onPlayerTurn(p, prev)
-    if not KNOCKED then return end
-    print(KNOCKER)
-    print(p)
-    if KNOCKER == p then
-        -- disable turns after one loop around the table
-        -- after the knock
-        Turns.enable = false
+function next_turn(prev)
+    local p = newNextPlayers()[prev]
+    if KNOCKED and p == KNOCKER then
+        UI.setAttribute("turn", "active", "false")
+        -- UI.hide("turn")
+        return
     end
+    CURRENT_TURN = p
+    -- UI.hide("turn")
+    UI.setAttribute("turn", "visibility", p .. "|Black")
+    UI.setAttribute("turn_text", "color", p)
+    -- UI.show("turn")
 end
 
 --------------------------------------------------------------------------------
@@ -232,6 +211,18 @@ function clear_buttons()
     for p,b in pairs(counter) do
         b.editButton({index = 2, label = 0, tooltip = 0})
     end
+end
+
+function button_toggle()
+    local params = {}
+    if UI.getAttribute("deal_cell", "active") == "false" then
+        params = {"true", "1", "false"}
+    else
+        params = {"false", "2", "true"}
+    end
+    UI.setAttribute("deal_cell", "active", params[1])
+    UI.setAttribute("gather_cell", "columnspan", params[2])
+    UI.setAttribute("knock_row", "active", params[3])
 end
 
 function overrideKnockPrompt(player)

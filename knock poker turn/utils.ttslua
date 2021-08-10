@@ -1,24 +1,25 @@
-function newNextPlayers()
-    local np = {}
-    if #getSeatedPlayers() == 1 then
-        np[getSeatedPlayers()[1]] = getSeatedPlayers()[1]
-        return np
-    end
-
+function get_seated_players() -- for use if the built in getSeatedPlayers() doesn't work
     local seated_players = {}
-    for i,p in ipairs(PLAYER_COLORS) do
+    for _,p in ipairs(PLAYER_COLORS) do
         if Player[p].seated then
             table.insert(seated_players, p)
         end
     end
+    return seated_players
+end
 
+function newNextPlayers()
+    local np = {}
+    local seated_players = get_seated_players()
+    -- local seated_players = getSeatedPlayers()
     for n,player in ipairs(seated_players) do
         np[player] = seated_players[n + 1]
     end
     np[seated_players[#seated_players]] = seated_players[1]
-    for i,j in pairs(np) do
-        msg = i .. '-->' .. j
-    end
+    -- for i,j in pairs(np) do
+    --     msg = i .. '-->' .. j
+    --     printToAll(msg)
+    -- end
     return np
 end
 

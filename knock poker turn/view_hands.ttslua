@@ -102,8 +102,8 @@ function onObjectDrop(color, obj)
     end
     for i,z in ipairs(obj.getZones()) do
         if z == discZone then
-            if color == Turns.turn_color then
-                Turns.turn_color = Turns.getNextTurnColor()
+            if color == CURRENT_TURN then
+                next_turn(CURRENT_TURN)
             end
         end
     end

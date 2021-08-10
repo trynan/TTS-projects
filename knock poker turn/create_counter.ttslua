@@ -1,0 +1,67 @@
+function spawnCounter(player, handT, counterPos)
+    local counter = spawnObject({
+        type = "BlockSquare",
+        position = counterPos,
+        rotation = handT.rotation,
+        scale = {1.48, 0.1, 1.48}
+    })
+    counter.setColorTint({0, 0, 0})
+    counter.setLock(true)
+    return counter
+end
+
+function create_counter(obj)
+    obj.createButton({ -- plus button
+        click_function = "add",
+        label          = "+",
+        function_owner = self,
+        position       = {-1.2, 0.5, 0},
+        rotation       = {0, 180, 0},
+        color          = "Black",
+        font_color     = "White",
+        width          = 350,
+        height         = 350,
+        font_size      = 350,
+        tooltip        = "+"
+    })
+    obj.createButton({ -- minus button
+        click_function = "sub",
+        label          = "-",
+        function_owner = self,
+        position       = {1.2, 0.5, 0},
+        rotation       = {0, 180, 0},
+        color          = "Black",
+        font_color     = "White",
+        width          = 350,
+        height         = 350,
+        font_size      = 350,
+        tooltip        = "-"
+    })
+    obj.createButton({ -- number
+        click_function = "nothin",
+        label          = 0,
+        function_owner = self,
+        position       = {0, 0.5, 0},
+        rotation       = {0, 180, 0},
+        color          = "Black",
+        font_color     = "White",
+        width          = 550,
+        height         = 550,
+        font_size      = 400,
+        tooltip        = 0
+    })
+end
+
+function add(obj)
+    editbutton(obj, 1)
+end
+function sub(obj)
+    if obj.getButtons()[3].label ~= "0" then
+        editbutton(obj, -1)
+    end
+end
+function editbutton(obj, n)
+    local current_num = obj.getButtons()[3].label
+    local new_num = current_num + n
+    obj.editButton({index = 2, label = new_num, tooltip = new_num})
+end
